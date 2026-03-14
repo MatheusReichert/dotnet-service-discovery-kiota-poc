@@ -1403,9 +1403,22 @@ kiota generate -l CSharp -d ../ServiceB/openapi.json -o ./Generated/ServiceBClie
 
 ---
 
-## 📚 Recursos Adicionais
+## 📚 Documentação Completa
 
-### Documentação Oficial
+Toda documentação detalhada está organizada na pasta `/docs`:
+
+- **[docs/DOCUMENTATION-INDEX.md](docs/DOCUMENTATION-INDEX.md)** - 📑 Índice completo de toda documentação
+- **[docs/QUICK-START.md](docs/QUICK-START.md)** - 🚀 Guia rápido de 5 minutos
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - 🏗️ Decisões arquiteturais e trade-offs
+- **[docs/INTEGRATION-GUIDE.md](docs/INTEGRATION-GUIDE.md)** - 🔗 Guia de integração Kiota + Descoberta
+- **[docs/KIOTA-EXPLAINED.md](docs/KIOTA-EXPLAINED.md)** - 🤖 Kiota explicado de forma simples
+- **[docs/AUTOMATIC-DISCOVERY.md](docs/AUTOMATIC-DISCOVERY.md)** - 🔍 Descoberta automática detalhada
+- **[docs/OPENAPI-WORKFLOW.md](docs/OPENAPI-WORKFLOW.md)** - 📋 Workflow OpenAPI e CI/CD
+- **[docs/TESTING.md](docs/TESTING.md)** - 🧪 Guia de testes
+- **[docs/k8s/README.md](docs/k8s/README.md)** - ☸️ Deployment Kubernetes
+- **[docs/k8s/SERVICE-DISCOVERY.md](docs/k8s/SERVICE-DISCOVERY.md)** - 🔎 Service Discovery no K8s
+
+### Recursos Oficiais
 
 - [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/)
 - [Service Discovery](https://learn.microsoft.com/en-us/dotnet/aspire/service-discovery/overview)
@@ -1497,7 +1510,7 @@ httpClient.BaseAddress = new Uri("http://servicec.orders-ns.svc.cluster.local");
 
 ### Documentação Completa
 
-Ver [k8s/README.md](k8s/README.md) para:
+Ver [docs/k8s/README.md](docs/k8s/README.md) para:
 - Instruções detalhadas de deployment
 - Troubleshooting
 - Network policies explicadas
