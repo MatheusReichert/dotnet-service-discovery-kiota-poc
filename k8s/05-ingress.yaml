@@ -1,0 +1,27 @@
+---
+# Ingress para expor ServiceA externamente
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: servicea-ingress
+  namespace: users-ns
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.example.com
+    secretName: servicea-tls
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /api/users
+        pathType: Prefix
+        backend:
+          service:
+            name: servicea
+            port:
+              number: 80

@@ -1,0 +1,27 @@
+---
+# Namespace para ServiceA (Users)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: users-ns
+  labels:
+    team: users
+    app: servicea
+---
+# Namespace para ServiceB (Products)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: products-ns
+  labels:
+    team: products
+    app: serviceb
+---
+# Namespace para ServiceC (Orders)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: orders-ns
+  labels:
+    team: orders
+    app: servicec

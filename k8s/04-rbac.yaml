@@ -1,0 +1,90 @@
+---
+# ServiceAccount for ServiceA (in users-ns)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: servicea-sa
+  namespace: users-ns
+  labels:
+    app: servicea
+---
+# ServiceAccount for ServiceB (in products-ns)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: serviceb-sa
+  namespace: products-ns
+  labels:
+    app: serviceb
+---
+# ServiceAccount for ServiceC (in orders-ns)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: servicec-sa
+  namespace: orders-ns
+  labels:
+    app: servicec
+---
+# ClusterRole - allows listing services across all namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: service-discovery-reader
+  labels:
+    app: service-discovery
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+# ClusterRoleBinding for ServiceA
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: servicea-discovery-binding
+  labels:
+    app: servicea
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: service-discovery-reader
+subjects:
+- kind: ServiceAccount
+  name: servicea-sa
+  namespace: users-ns
+---
+# ClusterRoleBinding for ServiceB
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: serviceb-discovery-binding
+  labels:
+    app: serviceb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: service-discovery-reader
+subjects:
+- kind: ServiceAccount
+  name: serviceb-sa
+  namespace: products-ns
+---
+# ClusterRoleBinding for ServiceC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: servicec-discovery-binding
+  labels:
+    app: servicec
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: service-discovery-reader
+subjects:
+- kind: ServiceAccount
+  name: servicec-sa
+  namespace: orders-ns

@@ -1,0 +1,79 @@
+---
+# Network Policy: Permitir ServiceA acessar ServiceB
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-servicea-to-serviceb
+  namespace: products-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: serviceb
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: servicea
+      podSelector:
+        matchLabels:
+          app: servicea
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+# Network Policy: Permitir ServiceB acessar ServiceC
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-serviceb-to-servicec
+  namespace: orders-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: servicec
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: serviceb
+      podSelector:
+        matchLabels:
+          app: serviceb
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+# Network Policy: Bloquear todo o resto (deny all)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: users-ns
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: products-ns
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: orders-ns
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
