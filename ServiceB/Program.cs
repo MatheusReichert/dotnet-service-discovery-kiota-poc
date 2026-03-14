@@ -17,7 +17,20 @@ builder.Services.AddSingleton<IKubernetesServiceDiscovery, KubernetesServiceDisc
 // ServiceC Client Factory (Kiota + Descoberta Automática)
 builder.Services.AddScoped<ServiceCClientFactory>();
 
-builder.Services.AddOpenApi();
+// Configurar OpenAPI com metadados
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info = new()
+        {
+            Title = "ServiceB - Products API",
+            Version = "1.0.0",
+            Description = "API for managing products"
+        };
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 

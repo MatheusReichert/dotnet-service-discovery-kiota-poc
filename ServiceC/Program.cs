@@ -9,7 +9,20 @@ builder.Services.ConfigureHttpClientDefaults(http =>
     http.AddServiceDiscovery();
 });
 
-builder.Services.AddOpenApi();
+// Configurar OpenAPI com metadados
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info = new()
+        {
+            Title = "ServiceC - Orders API",
+            Version = "1.0.0",
+            Description = "API for managing orders"
+        };
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
