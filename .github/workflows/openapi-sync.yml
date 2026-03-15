@@ -4,9 +4,8 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'ServiceB/Program.cs'
+      - 'ServiceA/**/*.cs'
       - 'ServiceB/**/*.cs'
-      - 'ServiceC/Program.cs'
       - 'ServiceC/**/*.cs'
   pull_request:
     branches: [main, master]
@@ -30,29 +29,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # ServiceB: Build & Generate OpenAPI
-      - name: Build ServiceB
-        run: dotnet build ServiceB/ServiceB.csproj --configuration Release
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-
 
-      - name: Start ServiceB
-        run: |
-          dotnet run --project ServiceB --no-build --configuration Release --urls "http://localhost:5002" &
-          echo $! > serviceb.pid
-          for i in $(seq 1 30); do
-            curl -s http://localhost:5002/openapi/v1.json > /dev/null 2>&1 && echo "ServiceB ready" && break
-            echo "Waiting for ServiceB... ($i/30)"
-            sleep 2
-          done
+      # Install Kiota com versão fixada para geração determinística
+      - name: Install Kiota
+        run: dotnet tool install --global Microsoft.OpenApi.Kiota --version 1.30.0
 
-      - name: Extract OpenAPI from ServiceB
-        run: |
-          curl -f http://localhost:5002/openapi/v1.json -o ServiceB/openapi.json
-          cat ServiceB/openapi.json | jq '.' # Validate JSON
-
-      - name: Stop ServiceB
-        run: kill $(cat serviceb.pid) || true
-
-      # ServiceC: Build & Generate OpenAPI
+      # ── Passo 1: ServiceC (folha da árvore, sem dependências) ──────────────
       - name: Build ServiceC
         run: dotnet build ServiceC/ServiceC.csproj --configuration Release
 
@@ -74,32 +62,7 @@ jobs:
       - name: Stop ServiceC
         run: kill $(cat servicec.pid) || true
 
-      # Upload OpenAPI as artifacts
-      - name: Upload OpenAPI Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: openapi-specs-${{ github.sha }}
-          path: |
-            ServiceB/openapi.json
-            ServiceC/openapi.json
-          retention-days: 90
-
-      # Install Kiota
-      - name: Install Kiota
-        run: dotnet tool install --global Microsoft.OpenApi.Kiota
-
-      # Regenerate ServiceA client (consumes ServiceB)
-      - name: Generate ServiceB Client for ServiceA
-        run: |
-          cd ServiceA
-          kiota generate \
-            -l CSharp \
-            -d ../ServiceB/openapi.json \
-            -o ./Generated/ServiceBClient \
-            -n ServiceA.Generated.ServiceBClient \
-            --clean-output
-
-      # Regenerate ServiceB client (consumes ServiceC)
+      # ── Passo 2: Regenera client do ServiceC para ServiceB ─────────────────
       - name: Generate ServiceC Client for ServiceB
         run: |
           cd ServiceB
@@ -110,15 +73,57 @@ jobs:
             -n ServiceB.Generated.ServiceCClient \
             --clean-output
 
-      # Validate by building
+      # ── Passo 3: ServiceB (agora com client atualizado do ServiceC) ─────────
+      - name: Build ServiceB
+        run: dotnet build ServiceB/ServiceB.csproj --configuration Release
+
+      - name: Start ServiceB
+        run: |
+          dotnet run --project ServiceB --no-build --configuration Release --urls "http://localhost:5002" &
+          echo $! > serviceb.pid
+          for i in $(seq 1 30); do
+            curl -s http://localhost:5002/openapi/v1.json > /dev/null 2>&1 && echo "ServiceB ready" && break
+            echo "Waiting for ServiceB... ($i/30)"
+            sleep 2
+          done
+
+      - name: Extract OpenAPI from ServiceB
+        run: |
+          curl -f http://localhost:5002/openapi/v1.json -o ServiceB/openapi.json
+          cat ServiceB/openapi.json | jq '.'
+
+      - name: Stop ServiceB
+        run: kill $(cat serviceb.pid) || true
+
+      # ── Passo 4: Regenera client do ServiceB para ServiceA ─────────────────
+      - name: Generate ServiceB Client for ServiceA
+        run: |
+          cd ServiceA
+          kiota generate \
+            -l CSharp \
+            -d ../ServiceB/openapi.json \
+            -o ./Generated/ServiceBClient \
+            -n ServiceA.Generated.ServiceBClient \
+            --clean-output
+
+      # ── Passo 5: Valida tudo junto ──────────────────────────────────────────
       - name: Build All Projects to Validate
         run: dotnet build --configuration Release
 
-      # Run integration tests
       - name: Run Integration Tests (ServiceA.Tests)
         run: dotnet test ServiceA.Tests/ServiceA.Tests.csproj --configuration Release --no-build --logger "console;verbosity=minimal"
 
-      # Commit changes if on main branch
+      # ── Passo 6: Upload artifacts ───────────────────────────────────────────
+      - name: Upload OpenAPI Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-specs-${{ github.sha }}
+          path: |
+            ServiceB/openapi.json
+            ServiceC/openapi.json
+          retention-days: 90
+
+      # ── Passo 7: Commita clients e specs gerados (só no master) ────────────
       - name: Commit regenerated clients
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: |
