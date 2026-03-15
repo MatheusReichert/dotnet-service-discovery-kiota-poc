@@ -1,5 +1,6 @@
 using Scalar.AspNetCore;
 using ServiceB.Infrastructure;
+using ServiceB.Models;
 using Shared.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,24 @@ builder.Services.AddOpenApi(options =>
         };
         return Task.CompletedTask;
     });
+
+    // .NET 10 gera "type": ["integer","string"] e "type": ["number","string"]
+    // para int/double (OpenAPI 3.1 union). Kiota não consegue mapear union types
+    // para tipos C# concretos e usa UntypedNode. Normaliza para tipo único.
+    options.AddSchemaTransformer((schema, context, cancellationToken) =>
+    {
+        if (schema.Format is "int32" or "int64")
+        {
+            schema.Type = Microsoft.OpenApi.JsonSchemaType.Integer;
+            schema.Pattern = null;
+        }
+        else if (schema.Format is "float" or "double")
+        {
+            schema.Type = Microsoft.OpenApi.JsonSchemaType.Number;
+            schema.Pattern = null;
+        }
+        return Task.CompletedTask;
+    });
 });
 
 var app = builder.Build();
@@ -44,28 +63,28 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/api/products", () =>
 {
-    return Results.Ok(new[]
+    return Results.Ok(new Product[]
     {
-        new { Id = 1, Name = "Laptop", Price = 999.99 },
-        new { Id = 2, Name = "Mouse", Price = 29.99 }
+        new(1, "Laptop", 999.99),
+        new(2, "Mouse", 29.99)
     });
 })
 .WithName("GetProducts")
-.Produces(200);
+.Produces<Product[]>(200);
 
 app.MapGet("/api/products/{id}", (int id) =>
 {
-    return Results.Ok(new { Id = id, Name = $"Product {id}", Price = 99.99 });
+    return Results.Ok(new Product(id, $"Product {id}", 99.99));
 })
 .WithName("GetProductById")
-.Produces(200);
+.Produces<Product>(200);
 
 app.MapPut("/api/products/{id}", (int id, object product) =>
 {
-    return Results.Ok(new { Id = id, Name = "Updated Product", Price = 149.99 });
+    return Results.Ok(new Product(id, "Updated Product", 149.99));
 })
 .WithName("UpdateProduct")
-.Produces(200);
+.Produces<Product>(200);
 
 app.MapGet("/api/products/with-orders/{id}", async (
     IHttpClientFactory httpClientFactory,

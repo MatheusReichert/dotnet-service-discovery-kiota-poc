@@ -3,6 +3,7 @@
 using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions;
 using ServiceA.Generated.ServiceBClient.Api.Products;
+using ServiceA.Generated.ServiceBClient.Api.Services;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,6 +20,11 @@ namespace ServiceA.Generated.ServiceBClient.Api
         public global::ServiceA.Generated.ServiceBClient.Api.Products.ProductsRequestBuilder Products
         {
             get => new global::ServiceA.Generated.ServiceBClient.Api.Products.ProductsRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The services property</summary>
+        public global::ServiceA.Generated.ServiceBClient.Api.Services.ServicesRequestBuilder Services
+        {
+            get => new global::ServiceA.Generated.ServiceBClient.Api.Services.ServicesRequestBuilder(PathParameters, RequestAdapter);
         }
         /// <summary>
         /// Instantiates a new <see cref="global::ServiceA.Generated.ServiceBClient.Api.ApiRequestBuilder"/> and sets the default values.

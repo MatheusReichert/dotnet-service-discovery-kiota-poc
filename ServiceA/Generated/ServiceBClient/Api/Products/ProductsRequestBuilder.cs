@@ -4,6 +4,8 @@ using Microsoft.Kiota.Abstractions.Extensions;
 using Microsoft.Kiota.Abstractions.Serialization;
 using Microsoft.Kiota.Abstractions;
 using ServiceA.Generated.ServiceBClient.Api.Products.Item;
+using ServiceA.Generated.ServiceBClient.Api.Products.WithOrders;
+using ServiceA.Generated.ServiceBClient.Api.Products.WithOrdersTyped;
 using ServiceA.Generated.ServiceBClient.Models;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +20,16 @@ namespace ServiceA.Generated.ServiceBClient.Api.Products
     [global::System.CodeDom.Compiler.GeneratedCode("Kiota", "1.0.0")]
     public partial class ProductsRequestBuilder : BaseRequestBuilder
     {
+        /// <summary>The withOrders property</summary>
+        public global::ServiceA.Generated.ServiceBClient.Api.Products.WithOrders.WithOrdersRequestBuilder WithOrders
+        {
+            get => new global::ServiceA.Generated.ServiceBClient.Api.Products.WithOrders.WithOrdersRequestBuilder(PathParameters, RequestAdapter);
+        }
+        /// <summary>The withOrdersTyped property</summary>
+        public global::ServiceA.Generated.ServiceBClient.Api.Products.WithOrdersTyped.WithOrdersTypedRequestBuilder WithOrdersTyped
+        {
+            get => new global::ServiceA.Generated.ServiceBClient.Api.Products.WithOrdersTyped.WithOrdersTypedRequestBuilder(PathParameters, RequestAdapter);
+        }
         /// <summary>Gets an item from the ServiceA.Generated.ServiceBClient.api.products.item collection</summary>
         /// <param name="position">Unique identifier of the item</param>
         /// <returns>A <see cref="global::ServiceA.Generated.ServiceBClient.Api.Products.Item.ProductsItemRequestBuilder"/></returns>
@@ -59,9 +71,6 @@ namespace ServiceA.Generated.ServiceBClient.Api.Products
         public ProductsRequestBuilder(string rawUrl, IRequestAdapter requestAdapter) : base(requestAdapter, "{+baseurl}/api/products", rawUrl)
         {
         }
-        /// <summary>
-        /// List all products
-        /// </summary>
         /// <returns>A List&lt;global::ServiceA.Generated.ServiceBClient.Models.Product&gt;</returns>
         /// <param name="cancellationToken">Cancellation token to use when cancelling requests</param>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
@@ -78,9 +87,6 @@ namespace ServiceA.Generated.ServiceBClient.Api.Products
             var collectionResult = await RequestAdapter.SendCollectionAsync<global::ServiceA.Generated.ServiceBClient.Models.Product>(requestInfo, global::ServiceA.Generated.ServiceBClient.Models.Product.CreateFromDiscriminatorValue, default, cancellationToken).ConfigureAwait(false);
             return collectionResult?.AsList();
         }
-        /// <summary>
-        /// List all products
-        /// </summary>
         /// <returns>A <see cref="RequestInformation"/></returns>
         /// <param name="requestConfiguration">Configuration for the request such as headers, query parameters, and middleware options.</param>
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER

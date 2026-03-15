@@ -39,7 +39,7 @@ namespace ServiceA.Generated.ServiceBClient
             ApiClientBuilder.RegisterDefaultDeserializer<FormParseNodeFactory>();
             if (string.IsNullOrEmpty(RequestAdapter.BaseUrl))
             {
-                RequestAdapter.BaseUrl = "http://serviceb.products-ns.svc.cluster.local";
+                RequestAdapter.BaseUrl = "http://localhost:5002";
             }
             PathParameters.TryAdd("baseurl", RequestAdapter.BaseUrl);
         }
