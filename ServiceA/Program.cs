@@ -105,7 +105,7 @@ app.MapGet("/api/users/with-products-typed/{id}", async (int id, ServiceBClientF
         var products = await client.Api.Products.GetAsync();
 
         // Map to plain DTOs — Kiota models carry AdditionalData which breaks System.Text.Json
-        var productDtos = products?.Select(p => new ProductDto(p.Id, p.Name, p.Price)).ToList();
+        var productDtos = products?.AsEnumerable().Select(p => new ProductDto(p.Id, p.Name, p.Price)).ToList();
 
         return Results.Ok(new
         {
