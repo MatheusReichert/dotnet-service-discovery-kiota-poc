@@ -3,15 +3,15 @@ using System.Net;
 namespace ServiceA.Tests;
 
 /// <summary>
-/// Testes de integração para os endpoints que chamam o ServiceB.
+/// Integration tests for endpoints that call ServiceB.
 ///
-/// Como funciona o mock:
-///   - IKubernetesServiceDiscovery → retorna null (sem K8s)
-///   - IHttpClientFactory → retorna HttpClient com FakeServiceBMessageHandler
-///   - FakeServiceBMessageHandler → devolve [Laptop, Mouse] para qualquer request
+/// How the mock works:
+///   - IKubernetesServiceDiscovery → returns null (no K8s)
+///   - IHttpClientFactory → returns HttpClient with FakeServiceBMessageHandler
+///   - FakeServiceBMessageHandler → returns [Laptop, Mouse] for any request
 ///
-/// Isso testa que ServiceA processa corretamente a resposta do ServiceB,
-/// sem depender de rede real ou do ServiceB estar rodando.
+/// This verifies that ServiceA correctly processes ServiceB's response,
+/// without relying on real network or ServiceB being up.
 /// </summary>
 public class CrossServiceTests : IClassFixture<ServiceAWebApplicationFactory>
 {
@@ -40,7 +40,7 @@ public class CrossServiceTests : IClassFixture<ServiceAWebApplicationFactory>
         var response = await _client.GetAsync("/api/users/with-products/1");
         var body = await response.Content.ReadAsStringAsync();
 
-        // Fallback URL esperada quando K8s retorna null e config não está definida
+        // Expected fallback URL when K8s returns null and config is not set
         Assert.Contains("http://serviceb", body);
     }
 
@@ -62,7 +62,7 @@ public class CrossServiceTests : IClassFixture<ServiceAWebApplicationFactory>
         var response = await _client.GetAsync("/api/users/with-products-typed/1");
         var body = await response.Content.ReadAsStringAsync();
 
-        // Mensagem definida no endpoint para identificar o caminho Kiota
+        // Message defined in the endpoint to identify the Kiota path
         Assert.Contains("Kiota", body);
     }
 

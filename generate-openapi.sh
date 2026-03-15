@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Gerando OpenAPI a partir do código..."
+echo "🚀 Generating OpenAPI from code..."
 
 # ServiceB
 echo "📦 ServiceB..."
@@ -24,8 +24,8 @@ kill $PID_C 2>/dev/null || true
 echo "✅ ServiceC/openapi.json"
 
 echo ""
-echo "✅ OpenAPI gerados com sucesso!"
+echo "✅ OpenAPI files generated successfully!"
 echo ""
-echo "💡 Próximo passo: Regenerar clientes Kiota"
+echo "💡 Next step: Regenerate Kiota clients"
 echo "   cd ServiceA && kiota generate -d ../ServiceB/openapi.json -o ./Generated/ServiceBClient"
 echo "   cd ServiceB && kiota generate -d ../ServiceC/openapi.json -o ./Generated/ServiceCClient"

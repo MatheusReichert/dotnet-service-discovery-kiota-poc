@@ -1,29 +1,29 @@
-# 🔍 Descoberta Automática - Como Funciona
+# 🔍 Automatic Discovery - How It Works
 
-Esta POC implementa descoberta automática de serviços **sem URLs hardcoded** usando Labels + KubernetesClient.
+This POC implements automatic service discovery **without hardcoded URLs** using Labels + KubernetesClient.
 
-## ❌ Problema: URLs Hardcoded (Abordagem Tradicional)
+## ❌ Problem: Hardcoded URLs (Traditional Approach)
 
 ```yaml
-# ❌ Deployment tradicional - URLs fixas
+# ❌ Traditional deployment - fixed URLs
 env:
 - name: Services__ServiceB__Url
   value: "http://serviceb.products-ns.svc.cluster.local"  # HARDCODED!
 ```
 
-**Problemas:**
-- Se ServiceB mudar de namespace, precisa atualizar deployment
-- Se renomear o serviço, quebra
-- Dificulta mover serviços entre ambientes
-- Não funciona em multi-cluster
+**Problems:**
+- If ServiceB changes namespace, the deployment must be updated
+- If the service is renamed, it breaks
+- Makes it harder to move services between environments
+- Does not work in multi-cluster
 
-## ✅ Solução: Descoberta Automática via Labels
+## ✅ Solution: Automatic Discovery via Labels
 
-### Como Funciona
+### How It Works
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ 1. ServiceB anuncia sua API via LABEL                          │
+│ 1. ServiceB announces its API via LABEL                        │
 │                                                                 │
 │    apiVersion: v1                                               │
 │    kind: Service                                                │
@@ -31,30 +31,30 @@ env:
 │      name: serviceb                                             │
 │      namespace: products-ns                                     │
 │      labels:                                                    │
-│        api-type: products-api  ← IDENTIFICADOR DA API          │
+│        api-type: products-api  ← API IDENTIFIER                │
 └────────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────────┐
-│ 2. ServiceA recebe request                                      │
+│ 2. ServiceA receives a request                                  │
 │                                                                 │
 │    GET /api/users/with-products/1                              │
 │    │                                                            │
-│    └─→ Precisa chamar ServiceB                                 │
+│    └─→ Needs to call ServiceB                                  │
 └────────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────────┐
-│ 3. KubernetesServiceDiscovery consulta K8s API                 │
+│ 3. KubernetesServiceDiscovery queries the K8s API              │
 │                                                                 │
 │    var url = await k8sDiscovery                                 │
 │        .DiscoverServiceUrlAsync("products-api");               │
 │                                                                 │
-│    Internamente:                                                │
+│    Internally:                                                  │
 │    - ListServiceForAllNamespacesAsync()                         │
 │    - labelSelector: "api-type=products-api"                    │
 └────────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────────┐
-│ 4. Kubernetes API retorna                                       │
+│ 4. Kubernetes API returns                                       │
 │                                                                 │
 │    {                                                            │
 │      "metadata": {                                              │
@@ -65,49 +65,49 @@ env:
 └────────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────────┐
-│ 5. ServiceA constrói URL automaticamente                        │
+│ 5. ServiceA builds the URL automatically                        │
 │                                                                 │
 │    url = "http://serviceb.products-ns.svc.cluster.local"       │
 │                                                                 │
-│    SEM HARDCODE! ✅                                            │
+│    NO HARDCODE! ✅                                             │
 └────────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────────┐
-│ 6. HttpClient usa URL descoberta                               │
+│ 6. HttpClient uses the discovered URL                          │
 │                                                                 │
 │    httpClient.BaseAddress = new Uri(url);                      │
 │    var response = await httpClient.GetAsync("/api/products");  │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-## 🎯 Vantagens
+## 🎯 Advantages
 
 ### 1. Zero Hardcode
 
 ```csharp
-// ❌ ANTES - Hardcoded
+// ❌ BEFORE - Hardcoded
 httpClient.BaseAddress = new Uri("http://serviceb.products-ns.svc.cluster.local");
 
-// ✅ AGORA - Descoberta automática
+// ✅ NOW - Automatic discovery
 var url = await k8sDiscovery.DiscoverServiceUrlAsync("products-api");
 httpClient.BaseAddress = new Uri(url);
 ```
 
-### 2. Mudanças de Namespace Transparentes
+### 2. Transparent Namespace Changes
 
 ```yaml
-# ServiceB muda de namespace: products-ns → v2-products-ns
-# ServiceA continua funcionando! Não precisa mudança de código/config
+# ServiceB changes namespace: products-ns → v2-products-ns
+# ServiceA keeps working! No code/config change needed
 ```
 
-### 3. Renomeação de Serviços
+### 3. Service Renaming
 
 ```yaml
-# Renomeia: serviceb → products-service
-# ServiceA continua funcionando! Busca pela label "api-type: products-api"
+# Rename: serviceb → products-service
+# ServiceA keeps working! Searches by label "api-type: products-api"
 ```
 
-### 4. Multi-Ambiente
+### 4. Multi-Environment
 
 ```yaml
 # DEV
@@ -122,12 +122,12 @@ metadata:
   name: serviceb
   namespace: products-prod
   labels:
-    api-type: products-api  # ← Mesmo label, ServiceA descobre automaticamente
+    api-type: products-api  # ← Same label, ServiceA discovers automatically
 ```
 
-## 🔐 RBAC Necessário
+## 🔐 Required RBAC
 
-Para que os pods possam consultar a API do Kubernetes:
+For pods to be able to query the Kubernetes API:
 
 ```yaml
 # ServiceAccount
@@ -137,7 +137,7 @@ metadata:
   name: servicea-sa
   namespace: users-ns
 ---
-# ClusterRole - permissão para listar services
+# ClusterRole - permission to list services
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -147,7 +147,7 @@ rules:
   resources: ["services"]
   verbs: ["get", "list", "watch"]
 ---
-# ClusterRoleBinding - conecta ServiceAccount ao ClusterRole
+# ClusterRoleBinding - connects ServiceAccount to ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -167,7 +167,7 @@ subjects:
 kubectl apply -f k8s/04-rbac.yaml
 ```
 
-## 💻 Implementação C#
+## 💻 C# Implementation
 
 ### Interface
 
@@ -179,55 +179,55 @@ public interface IKubernetesServiceDiscovery
 }
 ```
 
-### Implementação
+### Implementation
 
 ```csharp
 public class KubernetesServiceDiscovery : IKubernetesServiceDiscovery
 {
     private readonly IKubernetes? _client;
     private readonly bool _isRunningInKubernetes;
-    
+
     public KubernetesServiceDiscovery()
     {
         try
         {
-            // Detecta se está rodando dentro do Kubernetes
+            // Detects if running inside Kubernetes
             var config = KubernetesClientConfiguration.InClusterConfig();
             _client = new Kubernetes(config);
             _isRunningInKubernetes = true;
         }
         catch
         {
-            // Não está no K8s (desenvolvimento local/Aspire)
+            // Not in K8s (local development/Aspire)
             _isRunningInKubernetes = false;
         }
     }
-    
+
     public async Task<string?> DiscoverServiceUrlAsync(string apiType)
     {
-        // Se não está no K8s, retorna null (usa fallback)
+        // If not in K8s, return null (use fallback)
         if (!_isRunningInKubernetes || _client == null)
             return null;
-        
-        // Busca services com label específico
+
+        // Search for services with specific label
         var services = await _client.CoreV1.ListServiceForAllNamespacesAsync(
             labelSelector: $"api-type={apiType}"
         );
-        
+
         var service = services.Items.FirstOrDefault();
-        if (service == null) 
+        if (service == null)
             return null;
-        
-        // Constrói URL automaticamente
+
+        // Build URL automatically
         var ns = service.Metadata.NamespaceProperty;
         var name = service.Metadata.Name;
-        
+
         return $"http://{name}.{ns}.svc.cluster.local";
     }
 }
 ```
 
-### Uso nos Endpoints
+### Usage in Endpoints
 
 ```csharp
 app.MapGet("/api/users/with-products/{id}", async (
@@ -235,60 +235,60 @@ app.MapGet("/api/users/with-products/{id}", async (
     IKubernetesServiceDiscovery k8sDiscovery,
     IConfiguration configuration) =>
 {
-    // 1. PRIORIDADE: Descoberta automática (K8s)
+    // 1. PRIORITY: Automatic discovery (K8s)
     var serviceUrl = await k8sDiscovery.DiscoverServiceUrlAsync("products-api");
-    
-    // 2. FALLBACK: Configuração manual (dev/Aspire)
+
+    // 2. FALLBACK: Manual configuration (dev/Aspire)
     if (string.IsNullOrEmpty(serviceUrl))
     {
         serviceUrl = configuration["Services:ServiceB:Url"] ?? "http://serviceb";
     }
-    
+
     var httpClient = httpClientFactory.CreateClient();
     httpClient.BaseAddress = new Uri(serviceUrl);
     var response = await httpClient.GetStringAsync("/api/products");
-    
+
     return Results.Ok(new { DiscoveredUrl = serviceUrl, Products = response });
 });
 ```
 
-## 🧪 Testando
+## 🧪 Testing
 
-### 1. Deploy no Kubernetes
+### 1. Deploy to Kubernetes
 
 ```bash
 # RBAC
 kubectl apply -f k8s/04-rbac.yaml
 
-# Services (com labels)
+# Services (with labels)
 kubectl apply -f k8s/00-namespaces.yaml
 kubectl apply -f k8s/01-servicea-deployment.yaml
 kubectl apply -f k8s/02-serviceb-deployment.yaml
 kubectl apply -f k8s/03-servicec-deployment.yaml
 ```
 
-### 2. Verificar Labels
+### 2. Verify Labels
 
 ```bash
-# Listar services com labels
+# List services with labels
 kubectl get svc -A --show-labels | grep api-type
 
-# Deve mostrar:
+# Should show:
 # users-ns      servicea   ...   api-type=users-api
 # products-ns   serviceb   ...   api-type=products-api
 # orders-ns     servicec   ...   api-type=orders-api
 ```
 
-### 3. Testar Descoberta
+### 3. Test Discovery
 
 ```bash
 # Port-forward ServiceA
 kubectl port-forward -n users-ns svc/servicea 8080:80
 
-# Ver catálogo de serviços descobertos automaticamente
+# View automatically discovered service catalog
 curl http://localhost:8080/api/services/catalog
 
-# Resposta:
+# Response:
 # {
 #   "DiscoveryMethod": "Kubernetes API",
 #   "Services": {
@@ -299,14 +299,14 @@ curl http://localhost:8080/api/services/catalog
 # }
 ```
 
-### 4. Testar Cadeia de Chamadas
+### 4. Test the Call Chain
 
 ```bash
-# ServiceA → ServiceB (descoberta automática) → ServiceC (descoberta automática)
+# ServiceA → ServiceB (automatic discovery) → ServiceC (automatic discovery)
 curl http://localhost:8080/api/users/with-products/1
 ```
 
-**Logs esperados:**
+**Expected logs:**
 ```
 [ServiceA] Discovering services via Kubernetes API...
 [ServiceA] Found products-api at: http://serviceb.products-ns.svc.cluster.local
@@ -316,62 +316,62 @@ curl http://localhost:8080/api/users/with-products/1
 [ServiceB] Calling ServiceC at discovered URL
 ```
 
-## 📊 Comparação
+## 📊 Comparison
 
-| Aspecto | Hardcoded URLs | Descoberta Automática |
-|---------|----------------|----------------------|
-| **URLs no deployment** | ✅ Sim (env vars) | ❌ Não |
-| **Mudança de namespace** | ❌ Precisa redeployar | ✅ Automático |
-| **Renomear serviço** | ❌ Precisa redeployar | ✅ Automático |
-| **Multi-ambiente** | ❌ Config por ambiente | ✅ Único label |
-| **Multi-cluster** | ❌ Difícil | ✅ Possível (Federation) |
-| **Acoplamento** | 🔴 Alto | 🟢 Baixo |
-| **Manutenção** | 🔴 Manual | 🟢 Automática |
+| Aspect | Hardcoded URLs | Automatic Discovery |
+|--------|----------------|---------------------|
+| **URLs in deployment** | ✅ Yes (env vars) | ❌ No |
+| **Namespace change** | ❌ Needs redeploy | ✅ Automatic |
+| **Rename service** | ❌ Needs redeploy | ✅ Automatic |
+| **Multi-environment** | ❌ Config per environment | ✅ Single label |
+| **Multi-cluster** | ❌ Difficult | ✅ Possible (Federation) |
+| **Coupling** | 🔴 High | 🟢 Low |
+| **Maintenance** | 🔴 Manual | 🟢 Automatic |
 
-## 🎓 Conceitos-Chave
+## 🎓 Key Concepts
 
-### 1. Labels como Contrato
-- Labels definem o "tipo" de API (`api-type: products-api`)
-- Serviços são descobertos pelo tipo, não pelo nome
+### 1. Labels as Contract
+- Labels define the "type" of API (`api-type: products-api`)
+- Services are discovered by type, not by name
 
-### 2. Kubernetes API como Registry
-- Pods consultam K8s API para descobrir outros serviços
-- RBAC controla quem pode consultar
+### 2. Kubernetes API as Registry
+- Pods query the K8s API to discover other services
+- RBAC controls who can query
 
-### 3. Fallback para Dev Local
-- Em K8s: usa descoberta automática
-- Localmente (Aspire): usa configuração manual
+### 3. Fallback for Local Dev
+- In K8s: uses automatic discovery
+- Locally (Aspire): uses manual configuration
 
 ### 4. Zero Trust
-- RBAC garante que apenas pods autorizados podem descobrir serviços
-- Network Policies complementam (quem pode acessar)
+- RBAC ensures only authorized pods can discover services
+- Network Policies complement this (who can access)
 
-## 📚 Arquivos da Implementação
+## 📚 Implementation Files
 
 ```
 dotnet-playground-test/
 ├── ServiceA/
 │   └── Infrastructure/
-│       └── KubernetesServiceDiscovery.cs  ← Implementação
+│       └── KubernetesServiceDiscovery.cs  ← Implementation
 ├── ServiceB/
 │   └── Infrastructure/
-│       └── KubernetesServiceDiscovery.cs  ← Implementação
+│       └── KubernetesServiceDiscovery.cs  ← Implementation
 ├── k8s/
 │   ├── 01-servicea-deployment.yaml        ← serviceAccountName + labels
 │   ├── 02-serviceb-deployment.yaml        ← serviceAccountName + labels
 │   ├── 03-servicec-deployment.yaml        ← serviceAccountName + labels
 │   ├── 04-rbac.yaml                       ← ServiceAccounts + RBAC
-│   └── SERVICE-DISCOVERY.md               ← Documentação detalhada
-└── AUTOMATIC-DISCOVERY.md                 ← Este arquivo
+│   └── SERVICE-DISCOVERY.md               ← Detailed documentation
+└── AUTOMATIC-DISCOVERY.md                 ← This file
 ```
 
-## 🚀 Próximos Passos
+## 🚀 Next Steps
 
-Para expandir:
+To expand:
 
-- [ ] Cache de descoberta (evitar consultar K8s toda hora)
-- [ ] Refresh automático (Watch API para updates)
-- [ ] Load balancing entre múltiplas instâncias
-- [ ] Descoberta cross-cluster (Kubernetes Federation)
-- [ ] Métricas de descoberta (quantas consultas, latência)
-- [ ] Fallback para versões específicas (`api-version` label)
+- [ ] Discovery cache (avoid querying K8s every time)
+- [ ] Automatic refresh (Watch API for updates)
+- [ ] Load balancing across multiple instances
+- [ ] Cross-cluster discovery (Kubernetes Federation)
+- [ ] Discovery metrics (query count, latency)
+- [ ] Fallback for specific versions (`api-version` label)

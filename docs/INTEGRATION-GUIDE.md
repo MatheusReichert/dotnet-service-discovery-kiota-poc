@@ -1,31 +1,31 @@
-# 🎯 Guia de Integração: Kiota + Descoberta Automática
+# 🎯 Integration Guide: Kiota + Automatic Discovery
 
-Esta POC demonstra a integração de **duas estratégias complementares**:
+This POC demonstrates the integration of **two complementary strategies**:
 
-1. **Descoberta Automática via Kubernetes Labels** - Para encontrar serviços dinamicamente
-2. **Kiota Type-Safe Clients** - Para fazer chamadas com validação em compile-time
+1. **Automatic Discovery via Kubernetes Labels** - To find services dynamically
+2. **Kiota Type-Safe Clients** - To make calls with compile-time validation
 
 ---
 
-## 🏗️ Arquitetura da Solução
+## 🏗️ Solution Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Projeto Shared                          │
+│                         Shared Project                           │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  KubernetesServiceDiscovery                               │  │
-│  │  - Consulta K8s API                                       │  │
-│  │  - Busca services por label (api-type)                    │  │
-│  │  - Retorna URLs automaticamente                           │  │
+│  │  - Queries K8s API                                        │  │
+│  │  - Finds services by label (api-type)                     │  │
+│  │  - Returns URLs automatically                             │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  KiotaClientFactoryBase<TClient>                          │  │
-│  │  - Classe base genérica                                   │  │
-│  │  - Combina descoberta + Kiota                             │  │
-│  │  - Reutilizável para todos os serviços                    │  │
+│  │  - Generic base class                                     │  │
+│  │  - Combines discovery + Kiota                             │  │
+│  │  - Reusable for all services                              │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓ (referenciado por)
+                              ↓ (referenced by)
         ┌─────────────────────┼─────────────────────┐
         ↓                     ↓                     ↓
 ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
@@ -33,49 +33,49 @@ Esta POC demonstra a integração de **duas estratégias complementares**:
 │               │    │               │    │               │
 │ ServiceBClient│    │ ServiceCClient│    │               │
 │ Factory       │    │ Factory       │    │               │
-│ (herda base)  │    │ (herda base)  │    │               │
+│ (inherits base│    │ (inherits base│    │               │
 └───────────────┘    └───────────────┘    └───────────────┘
 ```
 
 ---
 
-## 🔧 Componentes
+## 🔧 Components
 
-### 1. Shared Project (Código Reutilizável)
+### 1. Shared Project (Reusable Code)
 
-**Localização:** `/Shared/`
+**Location:** `/Shared/`
 
 **Classes:**
 
 #### `IKubernetesServiceDiscovery` / `KubernetesServiceDiscovery`
-- Consulta Kubernetes API para descobrir services
-- Busca por label `api-type`
-- Retorna URLs no formato: `http://{name}.{namespace}.svc.cluster.local`
+- Queries Kubernetes API to discover services
+- Searches by label `api-type`
+- Returns URLs in the format: `http://{name}.{namespace}.svc.cluster.local`
 
-**Exemplo:**
+**Example:**
 ```csharp
 var url = await k8sDiscovery.DiscoverServiceUrlAsync("products-api");
-// Retorna: http://serviceb.products-ns.svc.cluster.local
+// Returns: http://serviceb.products-ns.svc.cluster.local
 ```
 
 #### `KiotaClientFactoryBase<TClient>`
-- Classe base abstrata para criar factories
-- Implementa o pattern: **Descoberta → Fallback → Kiota Client**
-- Genérica: funciona com qualquer cliente Kiota
+- Abstract base class for creating factories
+- Implements the pattern: **Discovery → Fallback → Kiota Client**
+- Generic: works with any Kiota client
 
-**Propriedades abstratas:**
+**Abstract properties:**
 ```csharp
-protected abstract string ApiType { get; }           // ex: "products-api"
-protected abstract string ConfigurationKey { get; }  // ex: "Services:ServiceB:Url"
-protected abstract string DefaultUrl { get; }        // ex: "http://serviceb"
+protected abstract string ApiType { get; }           // e.g.: "products-api"
+protected abstract string ConfigurationKey { get; }  // e.g.: "Services:ServiceB:Url"
+protected abstract string DefaultUrl { get; }        // e.g.: "http://serviceb"
 protected abstract TClient CreateClient(HttpClientRequestAdapter adapter);
 ```
 
 ---
 
-### 2. ServiceA (Consumidor do ServiceB)
+### 2. ServiceA (Consumer of ServiceB)
 
-**Factory Específica:**
+**Specific Factory:**
 
 ```csharp
 // ServiceA/Infrastructure/ServiceBClientFactory.cs
@@ -87,12 +87,12 @@ public class ServiceBClientFactory : KiotaClientFactoryBase<ApiClient>
 
     protected override ApiClient CreateClient(HttpClientRequestAdapter adapter)
     {
-        return new ApiClient(adapter); // Cliente Kiota gerado
+        return new ApiClient(adapter); // Generated Kiota client
     }
 }
 ```
 
-**Registro no DI:**
+**DI Registration:**
 
 ```csharp
 // ServiceA/Program.cs
@@ -100,28 +100,28 @@ builder.Services.AddSingleton<IKubernetesServiceDiscovery, KubernetesServiceDisc
 builder.Services.AddScoped<ServiceBClientFactory>();
 ```
 
-**Uso no Endpoint:**
+**Usage in Endpoint:**
 
 ```csharp
 app.MapGet("/api/users/with-products-typed/{id}", async (
-    int id, 
+    int id,
     ServiceBClientFactory clientFactory) =>
 {
-    // 1. Cria cliente com descoberta automática
+    // 1. Create client with automatic discovery
     var client = await clientFactory.CreateClientAsync();
-    
-    // 2. Chamadas type-safe
+
+    // 2. Type-safe calls
     var products = await client.Api.Products.GetAsync();
-    
+
     return Results.Ok(new { UserId = id, Products = products });
 });
 ```
 
 ---
 
-### 3. ServiceB (Consumidor do ServiceC)
+### 3. ServiceB (Consumer of ServiceC)
 
-**Factory Específica:**
+**Specific Factory:**
 
 ```csharp
 // ServiceB/Infrastructure/ServiceCClientFactory.cs
@@ -140,11 +140,11 @@ public class ServiceCClientFactory : KiotaClientFactoryBase<ApiClient>
 
 ---
 
-## 🎯 Fluxo Completo de Descoberta + Kiota
+## 🎯 Complete Discovery + Kiota Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 1. Request chega no ServiceA                                    │
+│ 1. Request arrives at ServiceA                                  │
 │    GET /api/users/with-products-typed/1                         │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
@@ -152,117 +152,117 @@ public class ServiceCClientFactory : KiotaClientFactoryBase<ApiClient>
 │ 2. ServiceBClientFactory.CreateClientAsync()                    │
 │    ├─→ KubernetesServiceDiscovery.DiscoverServiceUrlAsync()    │
 │    │   └─→ Query: labelSelector="api-type=products-api"        │
-│    │   └─→ Retorna: http://serviceb.products-ns.svc...         │
-│    ├─→ Se não encontrar: usa Configuration ou Default          │
-│    ├─→ Cria HttpClient com BaseAddress = URL descoberta        │
-│    └─→ Retorna ApiClient (Kiota) configurado                   │
+│    │   └─→ Returns: http://serviceb.products-ns.svc...         │
+│    ├─→ If not found: uses Configuration or Default             │
+│    ├─→ Creates HttpClient with BaseAddress = discovered URL    │
+│    └─→ Returns configured ApiClient (Kiota)                    │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 3. Chamada Type-Safe com Kiota                                  │
+│ 3. Type-Safe Call with Kiota                                    │
 │    var products = await client.Api.Products.GetAsync();         │
-│    ✅ IntelliSense completo                                     │
+│    ✅ Full IntelliSense                                         │
 │    ✅ Compile-time validation                                   │
-│    ✅ Models gerados automaticamente                            │
+│    ✅ Automatically generated models                            │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 4. HttpClient faz request                                       │
+│ 4. HttpClient makes request                                     │
 │    GET http://serviceb.products-ns.svc.cluster.local/api/products│
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. ServiceB responde                                             │
+│ 5. ServiceB responds                                             │
 │    [{"id":1,"name":"Laptop","price":999.99}]                    │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 6. Kiota deserializa para objetos tipados                       │
+│ 6. Kiota deserializes into typed objects                        │
 │    List<Product> products                                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🎓 Vantagens da Integração
+## 🎓 Integration Benefits
 
-### 1. Zero Hardcode de URLs
+### 1. Zero URL Hardcoding
 ```csharp
-// ❌ ANTES
+// ❌ BEFORE
 var url = "http://serviceb.products-ns.svc.cluster.local"; // hardcoded!
 
-// ✅ AGORA
-var client = await clientFactory.CreateClientAsync(); // descoberto automaticamente
+// ✅ NOW
+var client = await clientFactory.CreateClientAsync(); // discovered automatically
 ```
 
-### 2. Type-Safety em Compile-Time
+### 2. Compile-Time Type-Safety
 ```csharp
-// ❌ HttpClient tradicional (runtime errors)
+// ❌ Traditional HttpClient (runtime errors)
 var response = await httpClient.GetStringAsync("/api/prodcts"); // typo! 💥
-var json = JsonSerializer.Deserialize<Product>(response); // pode quebrar
+var json = JsonSerializer.Deserialize<Product>(response); // can break
 
 // ✅ Kiota (compile-time errors)
 var products = await client.Api.Products.GetAsync(); // IntelliSense ✅
-// Se API mudar, código não compila!
+// If API changes, code won't compile!
 ```
 
-### 3. Mudanças de Namespace Transparentes
+### 3. Transparent Namespace Changes
 ```yaml
-# ServiceB move de products-ns → v2-products-ns
-# Código continua funcionando! Descoberta automática encontra pelo label
+# ServiceB moves from products-ns → v2-products-ns
+# Code keeps working! Automatic discovery finds it by label
 ```
 
-### 4. Refactoring Seguro
+### 4. Safe Refactoring
 ```csharp
-// Se ServiceB renomear endpoint /products → /items
-// Kiota regenera cliente
-// Código em ServiceA não compila até atualizar
-// ✅ Detecta problema ANTES do deploy
+// If ServiceB renames endpoint /products → /items
+// Kiota regenerates client
+// Code in ServiceA won't compile until updated
+// ✅ Detects problem BEFORE deploy
 ```
 
-### 5. Reutilização de Código
+### 5. Code Reuse
 ```csharp
-// Shared project usado por todos os serviços
-// KiotaClientFactoryBase evita duplicação
-// Apenas override de 3 propriedades por service
+// Shared project used by all services
+// KiotaClientFactoryBase avoids duplication
+// Only 3 property overrides per service
 ```
 
 ---
 
-## 📦 Estrutura de Arquivos
+## 📦 File Structure
 
 ```
 dotnet-playground-test/
-├── Shared/                                    # ← NOVO!
-│   ├── KubernetesServiceDiscovery.cs         # Descoberta automática
-│   ├── KiotaClientFactoryBase.cs             # Base para factories
+├── Shared/                                    # ← NEW!
+│   ├── KubernetesServiceDiscovery.cs         # Automatic discovery
+│   ├── KiotaClientFactoryBase.cs             # Base for factories
 │   └── Shared.csproj
 │
 ├── ServiceA/
 │   ├── Generated/
-│   │   └── ServiceBClient/                   # Cliente Kiota gerado
+│   │   └── ServiceBClient/                   # Generated Kiota client
 │   ├── Infrastructure/
-│   │   └── ServiceBClientFactory.cs          # Herda base, 10 linhas!
-│   └── Program.cs                            # Usa factory
+│   │   └── ServiceBClientFactory.cs          # Inherits base, 10 lines!
+│   └── Program.cs                            # Uses factory
 │
 ├── ServiceB/
 │   ├── Generated/
-│   │   └── ServiceCClient/                   # Cliente Kiota gerado
+│   │   └── ServiceCClient/                   # Generated Kiota client
 │   ├── Infrastructure/
-│   │   └── ServiceCClientFactory.cs          # Herda base, 10 linhas!
-│   ├── openapi.json                          # Contrato da API
+│   │   └── ServiceCClientFactory.cs          # Inherits base, 10 lines!
+│   ├── openapi.json                          # API contract
 │   └── Program.cs
 │
 └── ServiceC/
-    ├── openapi.json                          # Contrato da API
+    ├── openapi.json                          # API contract
     └── Program.cs
 ```
 
 ---
 
-## 🚀 Como Adicionar Novo Serviço
+## 🚀 How to Add a New Service
 
-### Passo 1: Criar OpenAPI spec
+### Step 1: Create OpenAPI spec
 ```json
 // ServiceD/openapi.json
 {
@@ -272,7 +272,7 @@ dotnet-playground-test/
 }
 ```
 
-### Passo 2: Gerar Cliente Kiota
+### Step 2: Generate Kiota Client
 ```bash
 cd ServiceC
 kiota generate -l CSharp \
@@ -281,7 +281,7 @@ kiota generate -l CSharp \
   -n ServiceC.Generated.ServiceDClient
 ```
 
-### Passo 3: Criar Factory (10 linhas!)
+### Step 3: Create Factory (10 lines!)
 ```csharp
 // ServiceC/Infrastructure/ServiceDClientFactory.cs
 public class ServiceDClientFactory : KiotaClientFactoryBase<ApiClient>
@@ -295,19 +295,19 @@ public class ServiceDClientFactory : KiotaClientFactoryBase<ApiClient>
     protected override string ApiType => "inventory-api";
     protected override string ConfigurationKey => "Services:ServiceD:Url";
     protected override string DefaultUrl => "http://serviced";
-    
-    protected override ApiClient CreateClient(HttpClientRequestAdapter adapter) 
+
+    protected override ApiClient CreateClient(HttpClientRequestAdapter adapter)
         => new ApiClient(adapter);
 }
 ```
 
-### Passo 4: Registrar no DI
+### Step 4: Register in DI
 ```csharp
 // ServiceC/Program.cs
 builder.Services.AddScoped<ServiceDClientFactory>();
 ```
 
-### Passo 5: Usar!
+### Step 5: Use it!
 ```csharp
 app.MapGet("/inventory", async (ServiceDClientFactory factory) =>
 {
@@ -318,15 +318,15 @@ app.MapGet("/inventory", async (ServiceDClientFactory factory) =>
 
 ---
 
-## 🧪 Testando a Integração
+## 🧪 Testing the Integration
 
-### Endpoint Tradicional (HttpClient)
+### Traditional Endpoint (HttpClient)
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
   curl -s http://servicea.users-ns/api/users/with-products/1
 ```
 
-**Resposta:**
+**Response:**
 ```json
 {
   "message": "ServiceA called ServiceB via service discovery",
@@ -335,16 +335,16 @@ kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
 }
 ```
 
-### Endpoint Type-Safe (Kiota + Descoberta)
+### Type-Safe Endpoint (Kiota + Discovery)
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
   curl -s http://servicea.users-ns/api/users/with-products-typed/1
 ```
 
-**Resposta:**
+**Response:**
 ```json
 {
-  "message": "ServiceA → ServiceB usando Kiota + Descoberta Automática",
+  "message": "ServiceA → ServiceB using Kiota + Automatic Discovery",
   "method": "Type-Safe Kiota Client",
   "userId": 1,
   "products": [
@@ -352,9 +352,9 @@ kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
     {"id": 2, "name": "Mouse", "price": 29.99}
   ],
   "benefits": [
-    "✅ URL descoberta automaticamente via K8s labels",
-    "✅ Cliente type-safe gerado por Kiota",
-    "✅ IntelliSense completo",
+    "✅ URL discovered automatically via K8s labels",
+    "✅ Type-safe client generated by Kiota",
+    "✅ Full IntelliSense",
     "✅ Compile-time validation"
   ]
 }
@@ -362,32 +362,32 @@ kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
 
 ---
 
-## 📊 Comparação: Antes vs Agora
+## 📊 Comparison: Before vs Now
 
-| Aspecto | Antes (HttpClient manual) | Agora (Kiota + Descoberta) |
-|---------|---------------------------|----------------------------|
-| **URLs** | Hardcoded em cada serviço | Descoberta automática |
+| Aspect | Before (manual HttpClient) | Now (Kiota + Discovery) |
+|--------|----------------------------|-------------------------|
+| **URLs** | Hardcoded in each service | Automatic discovery |
 | **Type-Safety** | ❌ Runtime errors | ✅ Compile-time errors |
-| **Mudanças de API** | Quebra em produção | Não compila |
-| **IntelliSense** | Nenhum | Completo |
-| **Boilerplate** | ~50 linhas por consumidor | ~10 linhas (herda base) |
-| **Refactoring** | Arriscado | Seguro |
-| **Cross-Namespace** | Config manual | Automático |
+| **API Changes** | Breaks in production | Won't compile |
+| **IntelliSense** | None | Full |
+| **Boilerplate** | ~50 lines per consumer | ~10 lines (inherits base) |
+| **Refactoring** | Risky | Safe |
+| **Cross-Namespace** | Manual config | Automatic |
 
 ---
 
-## 🎯 Conclusão
+## 🎯 Conclusion
 
-Esta POC demonstra a **combinação perfeita** de duas tecnologias:
+This POC demonstrates the **perfect combination** of two technologies:
 
-1. **Descoberta Automática** - Elimina hardcode, cross-namespace transparente
+1. **Automatic Discovery** - Eliminates hardcoding, transparent cross-namespace
 2. **Kiota** - Type-safety, IntelliSense, compile-time validation
 
-**Resultado:**
-- ✅ Código limpo e reutilizável (projeto Shared)
-- ✅ Zero URLs hardcoded
-- ✅ Erros detectados em compile-time
-- ✅ Fácil adicionar novos serviços (10 linhas)
-- ✅ Funciona em dev (Aspire) e prod (Kubernetes)
+**Result:**
+- ✅ Clean and reusable code (Shared project)
+- ✅ Zero hardcoded URLs
+- ✅ Errors detected at compile-time
+- ✅ Easy to add new services (10 lines)
+- ✅ Works in dev (Aspire) and prod (Kubernetes)
 
 **Perfect match! 🚀**

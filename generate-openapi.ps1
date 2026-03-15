@@ -1,4 +1,4 @@
-Write-Host "🚀 Gerando OpenAPI a partir do código..." -ForegroundColor Cyan
+Write-Host "🚀 Generating OpenAPI from code..." -ForegroundColor Cyan
 
 # ServiceB
 Write-Host "📦 ServiceB..." -ForegroundColor Blue
@@ -19,8 +19,8 @@ Stop-Process -Id $procC.Id -Force
 Write-Host "✅ ServiceC/openapi.json" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "✅ OpenAPI gerados com sucesso!" -ForegroundColor Green
+Write-Host "✅ OpenAPI files generated successfully!" -ForegroundColor Green
 Write-Host ""
-Write-Host "💡 Próximo passo: Regenerar clientes Kiota" -ForegroundColor Yellow
+Write-Host "💡 Next step: Regenerate Kiota clients" -ForegroundColor Yellow
 Write-Host "   cd ServiceA && kiota generate -d ../ServiceB/openapi.json -o ./Generated/ServiceBClient"
 Write-Host "   cd ServiceB && kiota generate -d ../ServiceC/openapi.json -o ./Generated/ServiceCClient"

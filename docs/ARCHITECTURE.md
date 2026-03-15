@@ -1,76 +1,76 @@
-# 🏛️ Arquitetura Técnica
+# 🏛️ Technical Architecture
 
-Decisões arquiteturais, trade-offs e alternativas consideradas nesta POC.
+Architectural decisions, trade-offs, and alternatives considered in this POC.
 
 ---
 
-## 🎯 Objetivos Arquiteturais
+## 🎯 Architectural Goals
 
-### Primários
-1. **Eliminar URLs hardcoded** - Descoberta automática via K8s
-2. **Type-safety** - Clientes gerados automaticamente (Kiota)
-3. **Prevenção de bugs** - Contratos validados em compile-time
-4. **Reutilização de código** - Projeto Shared
-5. **Deploy multi-ambiente** - Dev (Aspire) + Prod (Kubernetes)
+### Primary
+1. **Eliminate hardcoded URLs** - Automatic discovery via K8s
+2. **Type-safety** - Automatically generated clients (Kiota)
+3. **Bug prevention** - Contracts validated at compile-time
+4. **Code reuse** - Shared project
+5. **Multi-environment deployment** - Dev (Aspire) + Prod (Kubernetes)
 
-### Secundários
-- Documentação clara e didática
-- Fácil adicionar novos serviços
-- Pipeline CI/CD automatizado
+### Secondary
+- Clear and didactic documentation
+- Easy to add new services
+- Automated CI/CD pipeline
 - Cross-namespace communication
 
 ---
 
-## 🧩 Componentes da Arquitetura
+## 🧩 Architecture Components
 
-### 1. Projeto Shared
+### 1. Shared Project
 
-**Decisão:** Criar biblioteca compartilhada com código reutilizável.
+**Decision:** Create a shared library with reusable code.
 
-**Motivação:**
-- Evitar duplicação (DRY)
-- Facilitar manutenção
-- Consistência entre serviços
+**Motivation:**
+- Avoid duplication (DRY)
+- Ease of maintenance
+- Consistency across services
 
-**Conteúdo:**
+**Contents:**
 ```
 Shared/
-├── KubernetesServiceDiscovery.cs    (126 linhas)
-└── KiotaClientFactoryBase<T>.cs      (70 linhas)
-Total: 196 linhas reutilizadas
+├── KubernetesServiceDiscovery.cs    (126 lines)
+└── KiotaClientFactoryBase<T>.cs      (70 lines)
+Total: 196 reused lines
 ```
 
 **Trade-offs:**
 
-| Vantagem | Desvantagem |
-|----------|-------------|
-| ✅ 82% economia de código por serviço | ❌ Dependência entre projetos |
-| ✅ Bug fix em 1 lugar beneficia todos | ❌ Versionamento mais complexo |
-| ✅ Padrão consistente | ❌ Coupling moderado |
+| Advantage | Disadvantage |
+|-----------|--------------|
+| ✅ 82% code savings per service | ❌ Dependency between projects |
+| ✅ Bug fix in 1 place benefits all | ❌ More complex versioning |
+| ✅ Consistent pattern | ❌ Moderate coupling |
 
-**Alternativas Consideradas:**
-1. ❌ Duplicar código em cada serviço → Muito boilerplate
-2. ❌ NuGet package → Over-engineering para POC
-3. ✅ **Projeto Shared** → Balanceamento ideal
+**Alternatives Considered:**
+1. ❌ Duplicate code in each service → Too much boilerplate
+2. ❌ NuGet package → Over-engineering for a POC
+3. ✅ **Shared Project** → Ideal balance
 
 ---
 
-### 2. Descoberta Automática: Labels + KubernetesClient
+### 2. Automatic Discovery: Labels + KubernetesClient
 
-**Decisão:** Usar labels do Kubernetes + KubernetesClient library.
+**Decision:** Use Kubernetes labels + KubernetesClient library.
 
-**Motivação:**
-- Nativo do Kubernetes
-- Sem infraestrutura adicional
-- Simples de implementar
+**Motivation:**
+- Native to Kubernetes
+- No additional infrastructure
+- Simple to implement
 
-**Como funciona:**
+**How it works:**
 ```csharp
-// Service anuncia via label
+// Service announces via label
 labels:
   api-type: products-api
 
-// Consumidor descobre
+// Consumer discovers
 var services = await k8s.CoreV1.ListServiceForAllNamespacesAsync(
     labelSelector: "api-type=products-api"
 );
@@ -78,96 +78,96 @@ var services = await k8s.CoreV1.ListServiceForAllNamespacesAsync(
 
 **Trade-offs:**
 
-| Vantagem | Desvantagem |
-|----------|-------------|
-| ✅ Zero infraestrutura adicional | ❌ Requer RBAC permissions |
-| ✅ Funciona cross-namespace | ❌ Latência em cada chamada |
-| ✅ Nativo do Kubernetes | ❌ Não funciona fora do K8s |
+| Advantage | Disadvantage |
+|-----------|--------------|
+| ✅ Zero additional infrastructure | ❌ Requires RBAC permissions |
+| ✅ Works cross-namespace | ❌ Latency on each call |
+| ✅ Native to Kubernetes | ❌ Does not work outside K8s |
 
-**Alternativas Consideradas:**
+**Alternatives Considered:**
 
 1. **Consul** ⚖️
-   - ✅ Service mesh completo
-   - ❌ Infraestrutura extra
-   - ❌ Complexidade alta
+   - ✅ Full service mesh
+   - ❌ Extra infrastructure
+   - ❌ High complexity
 
 2. **Istio** ⚖️
-   - ✅ Descoberta 100% automática
+   - ✅ 100% automatic discovery
    - ✅ mTLS, circuit breaker built-in
-   - ❌ Overhead de recursos
-   - ❌ Curva de aprendizado
+   - ❌ Resource overhead
+   - ❌ Learning curve
 
-3. **URLs Hardcoded em ConfigMap** ❌
-   - ✅ Simples
-   - ❌ Manual, propenso a erros
-   - ❌ Não se adapta a mudanças
+3. **Hardcoded URLs in ConfigMap** ❌
+   - ✅ Simple
+   - ❌ Manual, error-prone
+   - ❌ Does not adapt to changes
 
-4. **Labels + KubernetesClient** ✅ **ESCOLHIDO**
-   - Balanceamento entre simplicidade e automação
+4. **Labels + KubernetesClient** ✅ **CHOSEN**
+   - Balance between simplicity and automation
 
 ---
 
-### 3. Kiota para Clientes Type-Safe
+### 3. Kiota for Type-Safe Clients
 
-**Decisão:** Gerar clientes HTTP usando Kiota (da Microsoft).
+**Decision:** Generate HTTP clients using Kiota (from Microsoft).
 
-**Motivação:**
+**Motivation:**
 - Compile-time validation
-- IntelliSense completo
-- Prevenção de runtime errors
-- Contrato como código
+- Full IntelliSense
+- Prevention of runtime errors
+- Contract as code
 
-**Como funciona:**
+**How it works:**
 ```
-OpenAPI (contrato)
+OpenAPI (contract)
     ↓ Kiota
-Cliente C# gerado
+Generated C# client
     ↓ Build
-Erros em compile-time se API mudou
+Compile-time errors if API changed
 ```
 
 **Trade-offs:**
 
-| Vantagem | Desvantagem |
-|----------|-------------|
-| ✅ Type-safe | ❌ Código gerado (mais arquivos) |
-| ✅ Compile-time errors | ❌ Regenerar quando API muda |
-| ✅ IntelliSense | ❌ Dependência do OpenAPI |
+| Advantage | Disadvantage |
+|-----------|--------------|
+| ✅ Type-safe | ❌ Generated code (more files) |
+| ✅ Compile-time errors | ❌ Regenerate when API changes |
+| ✅ IntelliSense | ❌ Dependency on OpenAPI |
 
-**Alternativas Consideradas:**
+**Alternatives Considered:**
 
-1. **HttpClient manual** ❌
-   - ✅ Simples
+1. **Manual HttpClient** ❌
+   - ✅ Simple
    - ❌ Runtime errors
-   - ❌ Sem type-safety
+   - ❌ No type-safety
 
 2. **Refit** ⚖️
    - ✅ Type-safe
    - ❌ Manual (interfaces)
-   - ❌ Sem geração automática
+   - ❌ No automatic generation
 
 3. **NSwag** ⚖️
-   - ✅ Gera clientes
-   - ❌ Menos moderno que Kiota
-   - ❌ Menor suporte da Microsoft
+   - ✅ Generates clients
+   - ❌ Less modern than Kiota
+   - ❌ Less Microsoft support
 
-4. **Kiota** ✅ **ESCOLHIDO**
+4. **Kiota** ✅ **CHOSEN**
    - Microsoft first-party
-   - Integração com OpenAPI
-   - Suporte de longo prazo
+   - OpenAPI integration
+   - Long-term support
 
 ---
 
-### 4. OpenAPI: Gerado Automaticamente
+### 4. OpenAPI: Automatically Generated
 
-**Decisão:** OpenAPI gerado do código, não manual.
+**Decision:** OpenAPI generated from code, not manually.
 
-**Motivação:**
-- Sempre sincronizado
-- Zero manutenção
-- Source of truth é o código
+**Motivation:**
+- Always in sync
+- Zero maintenance
+- Source of truth is the code
 
-**Implementação:**
+**Implementation:**
 ```csharp
 // Program.cs
 builder.Services.AddOpenApi(options => {
@@ -182,75 +182,75 @@ app.MapOpenApi(); // /openapi/v1.json
 
 **Trade-offs:**
 
-| Vantagem | Desvantagem |
-|----------|-------------|
-| ✅ Sempre sincronizado | ❌ Precisa rodar app para gerar |
-| ✅ Zero manutenção manual | ❌ Metadata via código |
-| ✅ Source of truth é código | ❌ Não há |
+| Advantage | Disadvantage |
+|-----------|--------------|
+| ✅ Always in sync | ❌ App must run to generate |
+| ✅ Zero manual maintenance | ❌ Metadata via code |
+| ✅ Source of truth is code | ❌ None |
 
-**Alternativas Consideradas:**
+**Alternatives Considered:**
 
-1. **OpenAPI manual (JSON)** ❌
-   - ❌ Desincronia frequente
-   - ❌ Propenso a erros
+1. **Manual OpenAPI (JSON)** ❌
+   - ❌ Frequent desynchronization
+   - ❌ Error-prone
 
 2. **Swagger/Swashbuckle** ⚖️
-   - ✅ Geração automática
-   - ❌ Mais verboso
-   - ✅ Usado em produção
+   - ✅ Automatic generation
+   - ❌ More verbose
+   - ✅ Used in production
 
-3. **Microsoft.AspNetCore.OpenApi** ✅ **ESCOLHIDO**
-   - Nativo .NET 9+
-   - Minimalista
-   - Suporte oficial
+3. **Microsoft.AspNetCore.OpenApi** ✅ **CHOSEN**
+   - Native .NET 9+
+   - Minimalist
+   - Official support
 
 ---
 
-### 5. Pipeline CI/CD: GitHub Actions
+### 5. CI/CD Pipeline: GitHub Actions
 
-**Decisão:** Automatizar geração de OpenAPI e clientes via GitHub Actions.
+**Decision:** Automate OpenAPI and client generation via GitHub Actions.
 
-**Motivação:**
-- Contratos sempre validados
-- Zero trabalho manual
-- OpenAPI como artefato versionado
+**Motivation:**
+- Contracts always validated
+- Zero manual work
+- OpenAPI as a versioned artifact
 
 **Workflow:**
 ```
-Push → Build → Rodar app → Extrair OpenAPI → 
-Regenerar Kiota → Build valida → Commit
+Push → Build → Run app → Extract OpenAPI →
+Regenerate Kiota → Build validates → Commit
 ```
 
 **Trade-offs:**
 
-| Vantagem | Desvantagem |
-|----------|-------------|
-| ✅ 100% automático | ❌ Commits automáticos |
-| ✅ Validação obrigatória | ❌ Latência no pipeline |
-| ✅ Artefatos versionados | ❌ Complexidade pipeline |
+| Advantage | Disadvantage |
+|-----------|--------------|
+| ✅ 100% automatic | ❌ Automatic commits |
+| ✅ Mandatory validation | ❌ Pipeline latency |
+| ✅ Versioned artifacts | ❌ Pipeline complexity |
 
-**Alternativas Consideradas:**
+**Alternatives Considered:**
 
-1. **Manual (dev roda scripts)** ❌
-   - ❌ Esquecimento frequente
-   - ❌ Inconsistência
+1. **Manual (dev runs scripts)** ❌
+   - ❌ Frequently forgotten
+   - ❌ Inconsistency
 
 2. **Pre-commit hooks** ⚖️
    - ✅ Local
-   - ❌ Dev pode pular
+   - ❌ Dev can skip
 
-3. **GitHub Actions** ✅ **ESCOLHIDO**
-   - Obrigatório
-   - Rastreável
-   - Artefatos centralizados
+3. **GitHub Actions** ✅ **CHOSEN**
+   - Mandatory
+   - Traceable
+   - Centralized artifacts
 
 ---
 
-## 🔐 Segurança
+## 🔐 Security
 
 ### RBAC (Kubernetes)
 
-**Decisão:** Minimal RBAC - apenas `get`, `list`, `watch` em `services`.
+**Decision:** Minimal RBAC - only `get`, `list`, `watch` on `services`.
 
 ```yaml
 rules:
@@ -259,42 +259,42 @@ rules:
   verbs: ["get", "list", "watch"]
 ```
 
-**Motivação:**
-- Princípio do menor privilégio
-- Apenas leitura (não escrita)
-- Escopo mínimo necessário
+**Motivation:**
+- Principle of least privilege
+- Read-only (no write)
+- Minimum required scope
 
 ### Network Policies
 
-**Implementado:** Sim (k8s/04-network-policies.yaml)
+**Implemented:** Yes (k8s/04-network-policies.yaml)
 
-**Motivação:**
+**Motivation:**
 - Zero-trust networking
-- Controle explícito de tráfego
+- Explicit traffic control
 - Defense in depth
 
 ---
 
-## 📈 Escalabilidade
+## 📈 Scalability
 
-### Descoberta Automática
+### Automatic Discovery
 
-**Atual:** Query em cada request.
+**Current:** Query on each request.
 
-**Limitação:** 
-- Latência adicional (~10-50ms)
-- Carga na API do Kubernetes
+**Limitation:**
+- Additional latency (~10-50ms)
+- Load on the Kubernetes API
 
-**Melhorias Futuras:**
+**Future Improvements:**
 ```csharp
-// Cache com expiração
+// Cache with expiration
 private readonly MemoryCache _cache;
 
 public async Task<string?> DiscoverServiceUrlAsync(string apiType)
 {
     if (_cache.TryGetValue(apiType, out string? url))
         return url;
-    
+
     url = await QueryKubernetesApi(apiType);
     _cache.Set(apiType, url, TimeSpan.FromMinutes(5));
     return url;
@@ -302,14 +302,14 @@ public async Task<string?> DiscoverServiceUrlAsync(string apiType)
 ```
 
 **Trade-off:**
-- ✅ Performance melhor
-- ❌ Stale data possível
+- ✅ Better performance
+- ❌ Stale data possible
 
 ### Multi-Cluster
 
-**Atual:** Single cluster.
+**Current:** Single cluster.
 
-**Futuro:** Kubernetes Federation.
+**Future:** Kubernetes Federation.
 
 ```yaml
 apiVersion: types.kubefed.io/v1beta1
@@ -326,47 +326,47 @@ spec:
 
 ---
 
-## 🎨 Padrões de Design
+## 🎨 Design Patterns
 
 ### 1. Factory Pattern
 
-**KiotaClientFactoryBase<T>** - Factory abstrata para criar clientes.
+**KiotaClientFactoryBase<T>** - Abstract factory for creating clients.
 
-**Benefícios:**
-- Encapsula criação complexa
-- Reutilização via herança
-- Injeção de dependências
+**Benefits:**
+- Encapsulates complex creation
+- Reuse via inheritance
+- Dependency injection
 
 ### 2. Template Method
 
-**KiotaClientFactoryBase<T>** usa template method:
+**KiotaClientFactoryBase<T>** uses template method:
 
 ```csharp
 // Template method
 public async Task<TClient> CreateClientAsync()
 {
-    var url = await DiscoverUrl();      // 1. Descoberta
+    var url = await DiscoverUrl();      // 1. Discovery
     var httpClient = CreateHttpClient(); // 2. HTTP client
     var adapter = CreateAdapter();       // 3. Kiota adapter
-    return CreateClient(adapter);        // 4. Cliente (abstrato)
+    return CreateClient(adapter);        // 4. Client (abstract)
 }
 
-// Método abstrato (cada subclass implementa)
+// Abstract method (each subclass implements)
 protected abstract TClient CreateClient(HttpClientRequestAdapter adapter);
 ```
 
 ### 3. Strategy Pattern
 
-**IKubernetesServiceDiscovery** - Interface permite trocar estratégia.
+**IKubernetesServiceDiscovery** - Interface allows swapping strategy.
 
-Futuro:
+Future:
 ```csharp
 public interface IServiceDiscovery
 {
     Task<string?> DiscoverAsync(string serviceType);
 }
 
-// Implementações
+// Implementations
 - KubernetesServiceDiscovery
 - ConsulServiceDiscovery
 - IstioServiceDiscovery
@@ -374,49 +374,49 @@ public interface IServiceDiscovery
 
 ---
 
-## 📊 Métricas da Arquitetura
+## 📊 Architecture Metrics
 
-### Código
+### Code
 
-| Métrica | Valor |
-|---------|-------|
-| **Shared** | 196 linhas |
-| **Factory por serviço** | ~28 linhas |
-| **Economia** | 82% |
-| **Clientes gerados** | ~500 linhas (auto) |
+| Metric | Value |
+|--------|-------|
+| **Shared** | 196 lines |
+| **Factory per service** | ~28 lines |
+| **Savings** | 82% |
+| **Generated clients** | ~500 lines (auto) |
 
 ### Performance
 
-| Operação | Latência |
-|----------|----------|
-| **Descoberta (sem cache)** | ~20-50ms |
-| **Descoberta (com cache)** | <1ms |
+| Operation | Latency |
+|-----------|---------|
+| **Discovery (no cache)** | ~20-50ms |
+| **Discovery (with cache)** | <1ms |
 | **Kiota client** | ~0ms (compile-time) |
 
 ### Deployment
 
-| Ambiente | Pods | Namespaces |
-|----------|------|------------|
+| Environment | Pods | Namespaces |
+|-------------|------|------------|
 | **Dev (Aspire)** | 3 | 1 |
 | **Prod (K8s)** | 6 (2x3) | 3 |
 
 ---
 
-## 🔄 Evolução Futura
+## 🔄 Future Evolution
 
-### Curto Prazo
-1. ✅ Cache de descoberta
-2. ✅ Métricas (Prometheus)
-3. ✅ Health checks avançados
+### Short Term
+1. ✅ Discovery cache
+2. ✅ Metrics (Prometheus)
+3. ✅ Advanced health checks
 4. ✅ Retry policies (Polly)
 
-### Médio Prazo
+### Medium Term
 1. ⏳ Circuit breaker
 2. ⏳ Distributed tracing (OpenTelemetry)
 3. ⏳ Multi-cluster discovery
-4. ⏳ Versioning de APIs
+4. ⏳ API versioning
 
-### Longo Prazo
+### Long Term
 1. 🔮 Service mesh (Istio)
 2. 🔮 GraphQL gateway
 3. 🔮 Event-driven (dapr)
@@ -424,30 +424,30 @@ public interface IServiceDiscovery
 
 ---
 
-## 🎯 Conclusão Arquitetural
+## 🎯 Architectural Conclusion
 
-Esta arquitetura balanceia:
-- ✅ **Simplicidade** - Sem over-engineering
-- ✅ **Automação** - Pipeline CI/CD completo
-- ✅ **Tipo-segurança** - Kiota + compile-time
-- ✅ **Flexibilidade** - Código compartilhado reutilizável
-- ✅ **Produção-ready** - RBAC, network policies, zero-trust
+This architecture balances:
+- ✅ **Simplicity** - No over-engineering
+- ✅ **Automation** - Full CI/CD pipeline
+- ✅ **Type-safety** - Kiota + compile-time
+- ✅ **Flexibility** - Reusable shared code
+- ✅ **Production-ready** - RBAC, network policies, zero-trust
 
-**Adequada para:**
-- Equipes de 2-10 pessoas
-- Microserviços .NET no Kubernetes
-- Ambientes com múltiplos namespaces
-- Organizações que valorizam type-safety
+**Suitable for:**
+- Teams of 2-10 people
+- .NET microservices on Kubernetes
+- Environments with multiple namespaces
+- Organizations that value type-safety
 
-**Não adequada para:**
+**Not suitable for:**
 - Single monolith
-- Ambientes sem Kubernetes
-- Equipes que preferem service mesh desde início
+- Environments without Kubernetes
+- Teams that prefer service mesh from the start
 
 ---
 
-**Arquitetura revisada e aprovada:** ✅
+**Architecture reviewed and approved:** ✅
 
-**Documentação arquitetural completa:** ✅
+**Complete architectural documentation:** ✅
 
-**Trade-offs documentados:** ✅
+**Trade-offs documented:** ✅

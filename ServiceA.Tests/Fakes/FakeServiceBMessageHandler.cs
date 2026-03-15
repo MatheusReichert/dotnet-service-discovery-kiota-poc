@@ -4,8 +4,8 @@ using System.Text;
 namespace ServiceA.Tests.Fakes;
 
 /// <summary>
-/// Intercepta qualquer chamada HTTP ao ServiceB e devolve produtos fictícios.
-/// Independente da URL — basta o handler estar na pipeline.
+/// Intercepts any HTTP call to ServiceB and returns stub product data.
+/// URL-agnostic — works as long as the handler is in the pipeline.
 /// </summary>
 public class FakeServiceBMessageHandler : HttpMessageHandler
 {

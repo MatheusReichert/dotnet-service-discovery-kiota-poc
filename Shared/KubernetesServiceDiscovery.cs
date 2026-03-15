@@ -22,7 +22,7 @@ public class KubernetesServiceDiscovery : IKubernetesServiceDiscovery
 
         try
         {
-            // Tenta configurar para in-cluster (quando rodando no K8s)
+            // Try to configure in-cluster mode (when running inside K8s)
             var config = KubernetesClientConfiguration.InClusterConfig();
             _client = new Kubernetes(config);
             _isRunningInKubernetes = true;
@@ -30,7 +30,7 @@ public class KubernetesServiceDiscovery : IKubernetesServiceDiscovery
         }
         catch (Exception ex)
         {
-            // Se falhar, estamos rodando localmente (Aspire)
+            // If it fails, we are running locally (Aspire)
             _logger.LogWarning(ex, "Not running in Kubernetes cluster. Service Discovery disabled.");
             _isRunningInKubernetes = false;
         }
@@ -41,14 +41,14 @@ public class KubernetesServiceDiscovery : IKubernetesServiceDiscovery
         if (!_isRunningInKubernetes || _client == null)
         {
             _logger.LogDebug("Skipping K8s discovery for '{ApiType}' - not in cluster", apiType);
-            return null; // Fallback para Aspire ou configuração manual
+            return null; // Fall back to Aspire or manual configuration
         }
 
         try
         {
             _logger.LogInformation("Discovering service with api-type={ApiType}", apiType);
 
-            // Buscar Services com label específico em todos os namespaces
+            // Find services with the specific label across all namespaces
             var services = await _client.CoreV1.ListServiceForAllNamespacesAsync(
                 labelSelector: $"api-type={apiType}"
             );
@@ -89,7 +89,7 @@ public class KubernetesServiceDiscovery : IKubernetesServiceDiscovery
 
         try
         {
-            // Buscar todos os Services com label de descoberta
+            // Find all services that have a discovery label
             var services = await _client.CoreV1.ListServiceForAllNamespacesAsync(
                 labelSelector: "api-type"
             );

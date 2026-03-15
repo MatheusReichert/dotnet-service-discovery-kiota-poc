@@ -6,8 +6,8 @@ using System.Text.Json;
 namespace ServiceA.Tests;
 
 /// <summary>
-/// Testes de integração para os endpoints básicos de usuários.
-/// Nenhuma dependência externa — ServiceB e K8s são totalmente mockados.
+/// Integration tests for basic user endpoints.
+/// No external dependencies — ServiceB and K8s are fully mocked.
 /// </summary>
 public class UsersEndpointTests : IClassFixture<ServiceAWebApplicationFactory>
 {

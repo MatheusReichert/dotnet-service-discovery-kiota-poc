@@ -5,7 +5,7 @@ using Microsoft.Kiota.Http.HttpClientLibrary;
 namespace Shared.Infrastructure;
 
 /// <summary>
-/// Classe base para factories que combinam Descoberta Automática + Kiota Client
+/// Base class for factories that combine Automatic Discovery + Kiota Client
 /// </summary>
 public abstract class KiotaClientFactoryBase<TClient> where TClient : class
 {
@@ -26,36 +26,36 @@ public abstract class KiotaClientFactoryBase<TClient> where TClient : class
     }
 
     /// <summary>
-    /// Label do tipo de API para descoberta (ex: "products-api")
+    /// API type label used for discovery (e.g. "products-api")
     /// </summary>
     protected abstract string ApiType { get; }
 
     /// <summary>
-    /// Chave de configuração para fallback (ex: "Services:ServiceB:Url")
+    /// Configuration key used as fallback (e.g. "Services:ServiceB:Url")
     /// </summary>
     protected abstract string ConfigurationKey { get; }
 
     /// <summary>
-    /// URL padrão de fallback (ex: "http://serviceb")
+    /// Default fallback URL (e.g. "http://serviceb")
     /// </summary>
     protected abstract string DefaultUrl { get; }
 
     /// <summary>
-    /// Cria a instância do cliente Kiota com o adapter configurado
+    /// Creates the Kiota client instance with the configured adapter
     /// </summary>
     protected abstract TClient CreateClient(HttpClientRequestAdapter adapter);
 
     /// <summary>
-    /// Cria cliente Kiota com URL descoberta automaticamente.
-    /// A URL é resolvida apenas na primeira chamada e reutilizada nas demais
-    /// (a factory deve ser registrada como Singleton no DI).
+    /// Creates a Kiota client with the automatically discovered URL.
+    /// The URL is resolved only on the first call and cached for subsequent ones
+    /// (the factory must be registered as a Singleton in DI).
     /// </summary>
     public async Task<TClient> CreateClientAsync()
     {
-        // 1. Resolve URL apenas uma vez — sem consulta ao K8s por request
+        // 1. Resolve URL only once — no K8s query per request
         _cachedBaseUrl ??= await ResolveBaseUrlAsync();
 
-        // 2. Criar HttpClient configurado (fresh por chamada — evita problemas de DNS/pool)
+        // 2. Create a fresh HttpClient per call — avoids DNS/connection pool issues
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(_cachedBaseUrl);
 
@@ -63,13 +63,13 @@ public abstract class KiotaClientFactoryBase<TClient> where TClient : class
         var authProvider = new AnonymousAuthenticationProvider();
         var adapter = new HttpClientRequestAdapter(authProvider, httpClient: httpClient);
 
-        // 4. Retornar cliente Kiota type-safe
+        // 4. Return type-safe Kiota client
         return CreateClient(adapter);
     }
 
     private async Task<string> ResolveBaseUrlAsync()
     {
-        // Fallback hierárquico: K8s → Config → Default
+        // Hierarchical fallback: K8s → Config → Default
         var discoveredUrl = await K8sDiscovery.DiscoverServiceUrlAsync(ApiType);
         return discoveredUrl
             ?? Configuration[ConfigurationKey]

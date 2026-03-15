@@ -1,9 +1,9 @@
 namespace ServiceA.Tests.Fakes;
 
 /// <summary>
-/// Substitui IHttpClientFactory no DI de testes.
-/// Retorna HttpClients que usam o FakeServiceBMessageHandler,
-/// evitando chamadas reais de rede ao ServiceB.
+/// Replaces IHttpClientFactory in the test DI container.
+/// Returns HttpClients backed by FakeServiceBMessageHandler,
+/// preventing real network calls to ServiceB.
 /// </summary>
 public class FakeHttpClientFactory : IHttpClientFactory
 {

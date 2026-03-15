@@ -1,24 +1,24 @@
 # 🧪 Testing Guide - POC Automatic Service Discovery
 
-## ✅ POC Deployada com Sucesso!
+## ✅ POC Successfully Deployed!
 
-Esta POC foi deployada e testada com sucesso no k3d usando **podman** e **dotnet publish**.
+This POC was successfully deployed and tested on k3d using **podman** and **dotnet publish**.
 
 ---
 
-## 📦 O que foi deployado
+## 📦 What was deployed
 
-### Cluster k3d
-- **Nome:** aspire-poc
-- **Imagens importadas:** ServiceA, ServiceB, ServiceC (via podman)
+### k3d Cluster
+- **Name:** aspire-poc
+- **Imported images:** ServiceA, ServiceB, ServiceC (via podman)
 
-### Pods Rodando
+### Running Pods
 
 ```bash
 kubectl get pods -A | grep service
 ```
 
-**Resultado:**
+**Result:**
 ```
 NAMESPACE     NAME                        READY   STATUS    RESTARTS   AGE
 orders-ns     servicec-8698cf4d67-7lpfp   1/1     Running   0          2m
@@ -29,13 +29,13 @@ users-ns      servicea-5f8468f55-br9l6    1/1     Running   0          2m
 users-ns      servicea-5f8468f55-k5cbh    1/1     Running   0          2m
 ```
 
-### Services com Labels para Descoberta
+### Services with Discovery Labels
 
 ```bash
 kubectl get svc -A --show-labels | grep api-type
 ```
 
-**Resultado:**
+**Result:**
 ```
 NAMESPACE     NAME       TYPE        CLUSTER-IP      PORT(S)   LABELS
 users-ns      servicea   ClusterIP   10.43.172.236   80/TCP    api-type=users-api,api-version=v1
@@ -45,17 +45,17 @@ orders-ns     servicec   ClusterIP   10.43.29.101    80/TCP    api-type=orders-a
 
 ---
 
-## 🔍 Testando a Descoberta Automática
+## 🔍 Testing Automatic Discovery
 
-### Teste 1: ServiceA → ServiceB (Cross-Namespace)
+### Test 1: ServiceA → ServiceB (Cross-Namespace)
 
-**Comando:**
+**Command:**
 ```bash
 kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- \
   curl -s http://servicea.users-ns/api/users/with-products/1
 ```
 
-**Resultado Esperado:**
+**Expected Result:**
 ```json
 {
   "message": "ServiceA called ServiceB via service discovery",
@@ -64,22 +64,22 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 }
 ```
 
-**✅ Confirmação:**
-- ServiceA descobriu ServiceB automaticamente usando label `api-type=products-api`
-- URL construída: `http://serviceb.products-ns.svc.cluster.local`
-- Comunicação cross-namespace funcionando
+**✅ Confirmation:**
+- ServiceA discovered ServiceB automatically using label `api-type=products-api`
+- URL built: `http://serviceb.products-ns.svc.cluster.local`
+- Cross-namespace communication working
 
 ---
 
-### Teste 2: ServiceB → ServiceC (Cross-Namespace)
+### Test 2: ServiceB → ServiceC (Cross-Namespace)
 
-**Comando:**
+**Command:**
 ```bash
 kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- \
   curl -s http://serviceb.products-ns/api/products/with-orders/1
 ```
 
-**Resultado Esperado:**
+**Expected Result:**
 ```json
 {
   "message": "ServiceB called ServiceC via service discovery",
@@ -88,21 +88,21 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 }
 ```
 
-**✅ Confirmação:**
-- ServiceB descobriu ServiceC automaticamente usando label `api-type=orders-api`
-- URL construída: `http://servicec.orders-ns.svc.cluster.local`
-- Comunicação cross-namespace funcionando
+**✅ Confirmation:**
+- ServiceB discovered ServiceC automatically using label `api-type=orders-api`
+- URL built: `http://servicec.orders-ns.svc.cluster.local`
+- Cross-namespace communication working
 
 ---
 
-### Teste 3: Verificar Logs da Descoberta
+### Test 3: Check Discovery Logs
 
 **ServiceA:**
 ```bash
 kubectl logs -n users-ns -l app=servicea --tail=30 | grep -i discover
 ```
 
-**Resultado:**
+**Result:**
 ```
 info: ServiceA.Infrastructure.KubernetesServiceDiscovery[0]
       Discovering service with api-type=products-api
@@ -115,7 +115,7 @@ info: ServiceA.Infrastructure.KubernetesServiceDiscovery[0]
 kubectl logs -n products-ns -l app=serviceb --tail=30 | grep -i discover
 ```
 
-**Resultado:**
+**Result:**
 ```
 info: ServiceB.Infrastructure.KubernetesServiceDiscovery[0]
       Discovering service with api-type=orders-api
@@ -125,15 +125,15 @@ info: ServiceB.Infrastructure.KubernetesServiceDiscovery[0]
 
 ---
 
-### Teste 4: Catálogo de Serviços Descobertos
+### Test 4: Discovered Services Catalog
 
-**Comando:**
+**Command:**
 ```bash
 kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- \
   curl -s http://servicea.users-ns/api/services/catalog
 ```
 
-**Resultado Esperado:**
+**Expected Result:**
 ```json
 {
   "discoveryMethod": "Kubernetes API",
@@ -147,31 +147,31 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 
 ---
 
-## 🎯 Confirmação de Funcionalidades
+## 🎯 Feature Confirmation
 
-### ✅ Descoberta Automática
-- [x] ServiceA descobre ServiceB via label `api-type=products-api`
-- [x] ServiceB descobre ServiceC via label `api-type=orders-api`
-- [x] URLs construídas automaticamente (sem hardcode!)
+### ✅ Automatic Discovery
+- [x] ServiceA discovers ServiceB via label `api-type=products-api`
+- [x] ServiceB discovers ServiceC via label `api-type=orders-api`
+- [x] URLs built automatically (no hardcode!)
 
 ### ✅ Cross-Namespace Communication
-- [x] users-ns → products-ns: **Funcionando**
-- [x] products-ns → orders-ns: **Funcionando**
-- [x] DNS do Kubernetes resolvendo corretamente
+- [x] users-ns → products-ns: **Working**
+- [x] products-ns → orders-ns: **Working**
+- [x] Kubernetes DNS resolving correctly
 
 ### ✅ RBAC Permissions
-- [x] ServiceAccounts criados (servicea-sa, serviceb-sa, servicec-sa)
-- [x] ClusterRole `service-discovery-reader` com permissões
-- [x] ClusterRoleBindings conectando tudo
+- [x] ServiceAccounts created (servicea-sa, serviceb-sa, servicec-sa)
+- [x] ClusterRole `service-discovery-reader` with permissions
+- [x] ClusterRoleBindings connecting everything
 
-### ✅ Labels e Metadata
-- [x] Services com label `api-type`
-- [x] Services com label `api-version`
-- [x] Annotations documentando APIs
+### ✅ Labels and Metadata
+- [x] Services with label `api-type`
+- [x] Services with label `api-version`
+- [x] Annotations documenting APIs
 
 ---
 
-## 📊 Arquitetura Implementada
+## 📊 Implemented Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -180,9 +180,9 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 │    - ServiceAccount: servicea-sa                                 │
 │    - Endpoint: /api/users/with-products/{id}                     │
 │    │                                                              │
-│    └─→ Descobre ServiceB via KubernetesClient                    │
+│    └─→ Discovers ServiceB via KubernetesClient                   │
 │        Query: labelSelector="api-type=products-api"              │
-│        Retorna: http://serviceb.products-ns.svc.cluster.local    │
+│        Returns: http://serviceb.products-ns.svc.cluster.local    │
 └──────────────────────────────────────────────────────────────────┘
                            ↓
 ┌──────────────────────────────────────────────────────────────────┐
@@ -191,9 +191,9 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 │    - ServiceAccount: serviceb-sa                                 │
 │    - Endpoint: /api/products/with-orders/{id}                    │
 │    │                                                              │
-│    └─→ Descobre ServiceC via KubernetesClient                    │
+│    └─→ Discovers ServiceC via KubernetesClient                   │
 │        Query: labelSelector="api-type=orders-api"                │
-│        Retorna: http://servicec.orders-ns.svc.cluster.local      │
+│        Returns: http://servicec.orders-ns.svc.cluster.local      │
 └──────────────────────────────────────────────────────────────────┘
                            ↓
 ┌──────────────────────────────────────────────────────────────────┐
@@ -206,9 +206,9 @@ kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never -- 
 
 ---
 
-## 🛠️ Como foi Build e Deploy
+## 🛠️ How it was Built and Deployed
 
-### 1. Build das Imagens (dotnet publish)
+### 1. Build Images (dotnet publish)
 
 ```bash
 # ServiceA
@@ -224,13 +224,13 @@ cd ServiceC
 dotnet publish -t:PublishContainer -p ContainerRepository=localhost:5555/servicec -p ContainerImageTag=latest
 ```
 
-### 2. Criar Cluster k3d
+### 2. Create k3d Cluster
 
 ```bash
 k3d cluster create aspire-poc --no-lb
 ```
 
-### 3. Importar Imagens
+### 3. Import Images
 
 ```bash
 podman save localhost:5555/servicea:latest -o /tmp/servicea.tar
@@ -243,7 +243,7 @@ podman save localhost:5555/servicec:latest -o /tmp/servicec.tar
 k3d image import /tmp/servicec.tar -c aspire-poc
 ```
 
-### 4. Deploy no Kubernetes
+### 4. Deploy to Kubernetes
 
 ```bash
 # Namespaces
@@ -260,24 +260,24 @@ kubectl apply -f k8s/03-servicec-deployment.yaml
 
 ---
 
-## 🎓 Pontos-Chave da Implementação
+## 🎓 Key Implementation Points
 
-### 1. Sem URLs Hardcoded
-Os deployments **não têm** variáveis de ambiente com URLs:
+### 1. No Hardcoded URLs
+The deployments **do not have** environment variables with URLs:
 ```yaml
-# ❌ ANTES (hardcoded)
+# ❌ BEFORE (hardcoded)
 env:
 - name: Services__ServiceB__Url
   value: "http://serviceb.products-ns.svc.cluster.local"
 
-# ✅ AGORA (descoberta automática)
+# ✅ NOW (automatic discovery)
 env:
 - name: ASPNETCORE_ENVIRONMENT
   value: "Production"
-# Sem URLs! Tudo descoberto via labels
+# No URLs! Everything discovered via labels
 ```
 
-### 2. KubernetesClient consulta K8s API
+### 2. KubernetesClient queries the K8s API
 ```csharp
 var services = await _client.CoreV1.ListServiceForAllNamespacesAsync(
     labelSelector: $"api-type={apiType}"
@@ -287,7 +287,7 @@ var service = services.Items.FirstOrDefault();
 var url = $"http://{service.Metadata.Name}.{service.Metadata.NamespaceProperty}.svc.cluster.local";
 ```
 
-### 3. RBAC permite consulta à API
+### 3. RBAC allows querying the API
 ```yaml
 # ClusterRole
 rules:
@@ -300,13 +300,13 @@ rules:
 
 ## 🧹 Cleanup
 
-Para limpar o ambiente:
+To clean up the environment:
 
 ```bash
-# Deletar cluster k3d
+# Delete k3d cluster
 k3d cluster delete aspire-poc
 
-# Remover imagens locais
+# Remove local images
 podman rmi localhost:5555/servicea:latest
 podman rmi localhost:5555/serviceb:latest
 podman rmi localhost:5555/servicec:latest
@@ -314,19 +314,19 @@ podman rmi localhost:5555/servicec:latest
 
 ---
 
-## 🚀 Conclusão
+## 🚀 Conclusion
 
-✅ **POC 100% funcional** demonstrando:
+✅ **100% functional POC** demonstrating:
 
-1. **Descoberta automática** via Labels + KubernetesClient
-2. **Zero hardcode** de URLs
-3. **Cross-namespace communication** funcionando
-4. **RBAC** configurado corretamente
-5. **Build simplificado** com `dotnet publish`
-6. **Deploy em k3d** com podman
+1. **Automatic discovery** via Labels + KubernetesClient
+2. **Zero hardcoded** URLs
+3. **Cross-namespace communication** working
+4. **RBAC** correctly configured
+5. **Simplified build** with `dotnet publish`
+6. **Deploy on k3d** with podman
 
-**Próximos passos:**
-- Cache de descoberta para performance
-- Health checks antes de retornar URLs
-- Métricas de descoberta (Prometheus)
-- Watch API para updates em tempo real
+**Next steps:**
+- Discovery cache for performance
+- Health checks before returning URLs
+- Discovery metrics (Prometheus)
+- Watch API for real-time updates

@@ -1,20 +1,20 @@
-# 📄 OpenAPI: Geração Automática como Artefato
+# 📄 OpenAPI: Automatic Generation as Artifact
 
-## 🎯 Objetivo
+## 🎯 Objective
 
-Gerar arquivos `openapi.json` **automaticamente** a partir do código e usá-los como **artefatos** em pipelines CI/CD para regenerar clientes Kiota.
+Generate `openapi.json` files **automatically** from code and use them as **artifacts** in CI/CD pipelines to regenerate Kiota clients.
 
 ---
 
-## 🚀 Solução Recomendada: Pipeline CI/CD
+## 🚀 Recommended Solution: CI/CD Pipeline
 
-### Arquitetura do Workflow
+### Workflow Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 1. Desenvolvedor altera código da API (ServiceB)                │
-│    - Adiciona/remove endpoints                                  │
-│    - Muda models, parâmetros, etc.                              │
+│ 1. Developer changes API code (ServiceB)                        │
+│    - Adds/removes endpoints                                     │
+│    - Changes models, parameters, etc.                           │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -24,27 +24,27 @@ Gerar arquivos `openapi.json` **automaticamente** a partir do código e usá-los
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 3. Pipeline CI/CD (GitHub Actions)                              │
+│ 3. CI/CD Pipeline (GitHub Actions)                              │
 │    ├─ Build ServiceB                                            │
-│    ├─ Rodar ServiceB temporariamente                            │
-│    ├─ Extrair OpenAPI de /openapi/v1.json                       │
-│    ├─ Salvar como artefato: serviceb-openapi.json              │
-│    └─ Regenerar clientes Kiota nos consumidores                 │
+│    ├─ Run ServiceB temporarily                                  │
+│    ├─ Extract OpenAPI from /openapi/v1.json                     │
+│    ├─ Save as artifact: serviceb-openapi.json                   │
+│    └─ Regenerate Kiota clients in consumers                     │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 4. Validação                                                     │
-│    ├─ Build dos consumidores (ServiceA)                         │
-│    ├─ Se API quebrou contrato → Build falha ✅                  │
-│    └─ Se OK → Commit clientes atualizados                       │
+│ 4. Validation                                                    │
+│    ├─ Build consumers (ServiceA)                                │
+│    ├─ If API broke contract → Build fails ✅                    │
+│    └─ If OK → Commit updated clients                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📝 Implementação: GitHub Actions
+## 📝 Implementation: GitHub Actions
 
-### Workflow Completo
+### Full Workflow
 
 **`.github/workflows/openapi-sync.yml`**
 
@@ -66,52 +66,52 @@ jobs:
   generate-openapi:
     name: Generate OpenAPI Documents
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      
+
       # ServiceB: Build & Generate OpenAPI
       - name: Build ServiceB
         run: dotnet build ServiceB/ServiceB.csproj --configuration Release
-      
+
       - name: Start ServiceB
         run: |
           dotnet run --project ServiceB --no-build --urls "http://localhost:5002" &
           echo $! > serviceb.pid
           sleep 10
-      
+
       - name: Extract OpenAPI from ServiceB
         run: |
           curl -f http://localhost:5002/openapi/v1.json -o ServiceB/openapi.json
           cat ServiceB/openapi.json | jq '.' # Validate JSON
-      
+
       - name: Stop ServiceB
         run: kill $(cat serviceb.pid) || true
-      
+
       # ServiceC: Build & Generate OpenAPI
       - name: Build ServiceC
         run: dotnet build ServiceC/ServiceC.csproj --configuration Release
-      
+
       - name: Start ServiceC
         run: |
           dotnet run --project ServiceC --no-build --urls "http://localhost:5003" &
           echo $! > servicec.pid
           sleep 10
-      
+
       - name: Extract OpenAPI from ServiceC
         run: |
           curl -f http://localhost:5003/openapi/v1.json -o ServiceC/openapi.json
           cat ServiceC/openapi.json | jq '.'
-      
+
       - name: Stop ServiceC
         run: kill $(cat servicec.pid) || true
-      
+
       # Upload OpenAPI as artifacts
       - name: Upload OpenAPI Artifacts
         uses: actions/upload-artifact@v4
@@ -126,24 +126,24 @@ jobs:
     name: Regenerate Kiota Clients
     needs: generate-openapi
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      
+
       - name: Download OpenAPI Artifacts
         uses: actions/download-artifact@v4
         with:
           name: openapi-specs
-      
+
       - name: Install Kiota
         run: dotnet tool install --global Microsoft.OpenApi.Kiota
-      
+
       # Regenerate ServiceA client (consumes ServiceB)
       - name: Generate ServiceB Client
         run: |
@@ -154,7 +154,7 @@ jobs:
             -o ./Generated/ServiceBClient \
             -n ServiceA.Generated.ServiceBClient \
             --clean-output
-      
+
       # Regenerate ServiceB client (consumes ServiceC)
       - name: Generate ServiceC Client
         run: |
@@ -165,11 +165,11 @@ jobs:
             -o ./Generated/ServiceCClient \
             -n ServiceB.Generated.ServiceCClient \
             --clean-output
-      
+
       # Validate by building
       - name: Build All Projects
         run: dotnet build --configuration Release
-      
+
       # Commit changes if on main branch
       - name: Commit regenerated clients
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -184,24 +184,24 @@ jobs:
     name: Validate API Contracts
     needs: generate-openapi
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Download OpenAPI Artifacts
         uses: actions/download-artifact@v4
         with:
           name: openapi-specs
-      
+
       - name: Check for breaking changes
         run: |
           # Install oasdiff for breaking change detection
           npm install -g @oasdiff/oasdiff
-          
+
           # Compare with previous version
           git fetch origin main:main || true
-          
+
           if [ -f ServiceB/openapi.json ]; then
             echo "Checking ServiceB for breaking changes..."
             git show main:ServiceB/openapi.json > /tmp/old-serviceb.json || echo "{}" > /tmp/old-serviceb.json
@@ -211,9 +211,9 @@ jobs:
 
 ---
 
-## 🔧 Configuração Local (Desenvolvimento)
+## 🔧 Local Configuration (Development)
 
-### Opção 1: Comando Manual
+### Option 1: Manual Command
 
 ```bash
 # ServiceB
@@ -229,7 +229,7 @@ curl http://localhost:5003/openapi/v1.json -o openapi.json
 pkill -f ServiceC
 ```
 
-### Opção 2: Script Simplificado
+### Option 2: Simplified Script
 
 **`generate-openapi.sh`**
 
@@ -292,19 +292,19 @@ Write-Host "✅ OpenAPI gerados com sucesso!" -ForegroundColor Green
 
 ---
 
-## 📦 OpenAPI como Artefato
+## 📦 OpenAPI as Artifact
 
-### Por que artefatos?
+### Why artifacts?
 
-1. **Versionamento** - Histórico de mudanças na API
-2. **Auditoria** - Rastreabilidade de alterações
-3. **Distribuição** - Consumidores baixam spec atualizada
-4. **CI/CD** - Jobs seguintes usam o artefato
+1. **Versioning** - History of API changes
+2. **Auditing** - Traceability of modifications
+3. **Distribution** - Consumers download the updated spec
+4. **CI/CD** - Subsequent jobs use the artifact
 
-### Como usar artefatos no GitHub Actions
+### How to use artifacts in GitHub Actions
 
 ```yaml
-# Job 1: Gera OpenAPI
+# Job 1: Generate OpenAPI
 - name: Upload OpenAPI
   uses: actions/upload-artifact@v4
   with:
@@ -313,14 +313,14 @@ Write-Host "✅ OpenAPI gerados com sucesso!" -ForegroundColor Green
       ServiceB/openapi.json
       ServiceC/openapi.json
 
-# Job 2: Baixa e usa
+# Job 2: Download and use
 - name: Download OpenAPI
   uses: actions/download-artifact@v4
   with:
     name: openapi-specs-${{ github.sha }}
 ```
 
-### Publicar como Release Asset
+### Publish as Release Asset
 
 ```yaml
 - name: Create Release
@@ -334,26 +334,26 @@ Write-Host "✅ OpenAPI gerados com sucesso!" -ForegroundColor Green
 
 ---
 
-## 🎯 Fluxo Completo: Dev → Prod
+## 🎯 Full Flow: Dev → Prod
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ DEV: Altera endpoint em ServiceB                                │
+│ DEV: Changes endpoint in ServiceB                               │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ LOCAL: Roda generate-openapi.sh                                 │
-│        → ServiceB/openapi.json atualizado                       │
+│ LOCAL: Runs generate-openapi.sh                                 │
+│        → ServiceB/openapi.json updated                          │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ LOCAL: Regenera cliente Kiota                                   │
+│ LOCAL: Regenerates Kiota client                                 │
 │        kiota generate -d ServiceB/openapi.json                  │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ LOCAL: Build                                                     │
-│        Se quebrou contrato → Erro de compilação ✅              │
+│        If contract broke → Compile error ✅                     │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -361,87 +361,87 @@ Write-Host "✅ OpenAPI gerados com sucesso!" -ForegroundColor Green
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ CI/CD: Pipeline roda                                             │
-│        1. Gera OpenAPI novamente (valida)                       │
-│        2. Salva como artefato                                    │
-│        3. Regenera clientes                                      │
-│        4. Valida breaking changes                                │
-│        5. Build de todos os projetos                             │
+│ CI/CD: Pipeline runs                                             │
+│        1. Generates OpenAPI again (validates)                   │
+│        2. Saves as artifact                                      │
+│        3. Regenerates clients                                    │
+│        4. Validates breaking changes                             │
+│        5. Builds all projects                                    │
 └─────────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ DEPLOY: Se tudo OK                                               │
-│         Artefato publicado em Release                            │
-│         Consumidores externos podem baixar                       │
+│ DEPLOY: If everything OK                                         │
+│         Artifact published in Release                            │
+│         External consumers can download                          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 Checklist de Implementação
+## 📋 Implementation Checklist
 
-### Configuração Inicial
+### Initial Setup
 
-- [ ] Adicionar `.github/workflows/openapi-sync.yml`
-- [ ] Criar `generate-openapi.sh` e `generate-openapi.ps1`
-- [ ] Configurar `ServiceB/Program.cs` com OpenAPI metadata
-- [ ] Configurar `ServiceC/Program.cs` com OpenAPI metadata
+- [ ] Add `.github/workflows/openapi-sync.yml`
+- [ ] Create `generate-openapi.sh` and `generate-openapi.ps1`
+- [ ] Configure `ServiceB/Program.cs` with OpenAPI metadata
+- [ ] Configure `ServiceC/Program.cs` with OpenAPI metadata
 
-### Desenvolvimento
+### Development
 
-- [ ] Rodar `generate-openapi.sh` após mudar APIs
-- [ ] Regenerar clientes Kiota
-- [ ] Build local para validar
-- [ ] Commit OpenAPI + clientes gerados
+- [ ] Run `generate-openapi.sh` after changing APIs
+- [ ] Regenerate Kiota clients
+- [ ] Local build to validate
+- [ ] Commit OpenAPI + generated clients
 
 ### CI/CD
 
-- [ ] Pipeline gera OpenAPI automaticamente
-- [ ] OpenAPI salvo como artefato
-- [ ] Clientes regenerados automaticamente
-- [ ] Breaking changes detectados
-- [ ] Build valida contratos
+- [ ] Pipeline generates OpenAPI automatically
+- [ ] OpenAPI saved as artifact
+- [ ] Clients regenerated automatically
+- [ ] Breaking changes detected
+- [ ] Build validates contracts
 
 ---
 
-## 🎓 Recomendações
+## 🎓 Recommendations
 
-### ✅ Faça
+### ✅ Do
 
-- Gere OpenAPI como artefato em CI/CD
-- Version OpenAPI files no git (rastreabilidade)
+- Generate OpenAPI as artifact in CI/CD
+- Version OpenAPI files in git (traceability)
 - Use breaking change detection (oasdiff)
-- Regenere clientes automaticamente em pipeline
-- Valide contratos em build-time
+- Regenerate clients automatically in pipeline
+- Validate contracts at build-time
 
-### ❌ Não Faça
+### ❌ Don't
 
-- Editar `openapi.json` manualmente
-- Commitar clientes sem regenerar
-- Deploy sem validar contratos
-- Ignorar breaking changes
-
----
-
-## 📊 Comparação: Manual vs Pipeline
-
-| Aspecto | Manual | Pipeline (Artefato) |
-|---------|--------|---------------------|
-| **Geração** | Dev roda script | Automático em CI |
-| **Validação** | Dev precisa lembrar | Sempre executado |
-| **Histórico** | Git commits | Artefatos versionados |
-| **Distribuição** | Email, Slack | GitHub Releases |
-| **Confiança** | Depende do dev | Garantido |
-| **Breaking Changes** | Manual | Automático (oasdiff) |
+- Edit `openapi.json` manually
+- Commit clients without regenerating
+- Deploy without validating contracts
+- Ignore breaking changes
 
 ---
 
-## 🚀 Próximos Passos
+## 📊 Comparison: Manual vs Pipeline
 
-1. Implementar workflow `.github/workflows/openapi-sync.yml`
-2. Criar scripts `generate-openapi.sh` e `.ps1`
-3. Testar localmente
-4. Fazer commit e ver pipeline rodar
-5. Verificar artefatos no GitHub Actions
+| Aspect | Manual | Pipeline (Artifact) |
+|--------|--------|---------------------|
+| **Generation** | Dev runs script | Automatic in CI |
+| **Validation** | Dev must remember | Always executed |
+| **History** | Git commits | Versioned artifacts |
+| **Distribution** | Email, Slack | GitHub Releases |
+| **Reliability** | Depends on dev | Guaranteed |
+| **Breaking Changes** | Manual | Automatic (oasdiff) |
 
-**Resultado:** OpenAPI sempre sincronizado, contratos validados, zero trabalho manual! 🎉
+---
+
+## 🚀 Next Steps
+
+1. Implement workflow `.github/workflows/openapi-sync.yml`
+2. Create scripts `generate-openapi.sh` and `.ps1`
+3. Test locally
+4. Commit and watch the pipeline run
+5. Check artifacts in GitHub Actions
+
+**Result:** OpenAPI always in sync, contracts validated, zero manual work! 🎉

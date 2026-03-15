@@ -3,8 +3,8 @@ using Shared.Infrastructure;
 namespace ServiceA.Tests.Fakes;
 
 /// <summary>
-/// Simula ambiente fora do Kubernetes — DiscoverServiceUrlAsync retorna null,
-/// fazendo o código cair no fallback de configuração.
+/// Simulates an environment outside Kubernetes — DiscoverServiceUrlAsync returns null,
+/// causing the code to fall back to configuration.
 /// </summary>
 public class FakeKubernetesServiceDiscovery : IKubernetesServiceDiscovery
 {

@@ -8,15 +8,15 @@ using Shared.Infrastructure;
 namespace ServiceA.Tests;
 
 /// <summary>
-/// Factory compartilhada entre os testes de integração do ServiceA.
+/// Shared factory for ServiceA integration tests.
 ///
-/// O que esta factory faz:
-///   1. Substitui IKubernetesServiceDiscovery por um fake que retorna null
-///      (simula "não estou no cluster K8s").
-///   2. Substitui IHttpClientFactory por um fake que devolve clientes com
-///      FakeServiceBMessageHandler, interceptando toda chamada HTTP ao ServiceB.
+/// What this factory does:
+///   1. Replaces IKubernetesServiceDiscovery with a fake that returns null
+///      (simulates "not running in a K8s cluster").
+///   2. Replaces IHttpClientFactory with a fake that returns clients with
+///      FakeServiceBMessageHandler, intercepting all HTTP calls to ServiceB.
 ///
-/// Com isso, os testes rodam sem Kubernetes, sem ServiceB real e sem rede.
+/// This allows tests to run without Kubernetes, a real ServiceB, or any network.
 /// </summary>
 public class ServiceAWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -26,11 +26,11 @@ public class ServiceAWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Substitui K8s discovery — retorna null (sem cluster)
+            // Replace K8s discovery — returns null (no cluster)
             services.RemoveAll<IKubernetesServiceDiscovery>();
             services.AddSingleton<IKubernetesServiceDiscovery, FakeKubernetesServiceDiscovery>();
 
-            // Substitui IHttpClientFactory — intercepta chamadas ao ServiceB
+            // Replace IHttpClientFactory — intercepts calls to ServiceB
             var fakeHandler = new FakeServiceBMessageHandler();
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new FakeHttpClientFactory(fakeHandler));

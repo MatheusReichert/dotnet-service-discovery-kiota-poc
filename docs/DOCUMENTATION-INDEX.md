@@ -1,260 +1,260 @@
-# 📚 Índice da Documentação
+# 📚 Documentation Index
 
-Esta POC demonstra a integração completa entre **Service Discovery**, **Kiota** e **OpenAPI** em microserviços .NET.
-
----
-
-## 🗺️ Mapa da Documentação
-
-### 🚀 Para Começar
-
-| Documento | Descrição | Quando Ler |
-|-----------|-----------|------------|
-| **[README.md](README.md)** | **Visão geral da POC** - Introdução, tecnologias, arquitetura | **Comece aqui!** |
-| **[QUICK-START.md](QUICK-START.md)** | Guia rápido para rodar a POC em 5 minutos | Quer testar rapidamente |
-
-### 🔍 Conceitos Principais
-
-| Documento | Descrição | Quando Ler |
-|-----------|-----------|------------|
-| **[KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md)** | O que é Kiota? Como funciona? (explicação simples) | Não conhece Kiota |
-| **[AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md)** | Como funciona descoberta automática via K8s labels | Quer entender service discovery |
-| **[INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md)** | Como Kiota + Descoberta trabalham juntos | Entender a integração completa |
-
-### 🛠️ Implementação
-
-| Documento | Descrição | Quando Ler |
-|-----------|-----------|------------|
-| **[OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md)** | Geração de OpenAPI e pipeline CI/CD | Implementar geração automática |
-| **[TESTING.md](TESTING.md)** | Como testar a POC deployada no k3d | Testar localmente |
-| **[k8s/README.md](k8s/README.md)** | Deploy no Kubernetes | Deployar no Kubernetes |
-| **[k8s/SERVICE-DISCOVERY.md](k8s/SERVICE-DISCOVERY.md)** | Service Discovery detalhado no K8s | Entender descoberta no K8s |
-
-### 📦 Arquitetura
-
-| Documento | Descrição | Quando Ler |
-|-----------|-----------|------------|
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Visão técnica completa da arquitetura | Entender decisões técnicas |
+This POC demonstrates the complete integration between **Service Discovery**, **Kiota**, and **OpenAPI** in .NET microservices.
 
 ---
 
-## 🎯 Fluxos de Leitura Recomendados
+## 🗺️ Documentation Map
 
-### Para Iniciantes
+### 🚀 Getting Started
+
+| Document | Description | When to Read |
+|----------|-------------|--------------|
+| **[README.md](README.md)** | **POC overview** - Introduction, technologies, architecture | **Start here!** |
+| **[QUICK-START.md](QUICK-START.md)** | Quick guide to run the POC in 5 minutes | Want to test quickly |
+
+### 🔍 Core Concepts
+
+| Document | Description | When to Read |
+|----------|-------------|--------------|
+| **[KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md)** | What is Kiota? How does it work? (simple explanation) | Not familiar with Kiota |
+| **[AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md)** | How automatic discovery via K8s labels works | Want to understand service discovery |
+| **[INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md)** | How Kiota + Discovery work together | Understand the full integration |
+
+### 🛠️ Implementation
+
+| Document | Description | When to Read |
+|----------|-------------|--------------|
+| **[OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md)** | OpenAPI generation and CI/CD pipeline | Implement automatic generation |
+| **[TESTING.md](TESTING.md)** | How to test the POC deployed on k3d | Test locally |
+| **[k8s/README.md](k8s/README.md)** | Deploy on Kubernetes | Deploy on Kubernetes |
+| **[k8s/SERVICE-DISCOVERY.md](k8s/SERVICE-DISCOVERY.md)** | Detailed Service Discovery on K8s | Understand discovery on K8s |
+
+### 📦 Architecture
+
+| Document | Description | When to Read |
+|----------|-------------|--------------|
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Complete technical architecture overview | Understand technical decisions |
+
+---
+
+## 🎯 Recommended Reading Paths
+
+### For Beginners
 
 ```
-1. README.md (visão geral)
+1. README.md (overview)
    ↓
-2. QUICK-START.md (rodar a POC)
+2. QUICK-START.md (run the POC)
    ↓
-3. KIOTA-EXPLAINED.md (entender Kiota)
+3. KIOTA-EXPLAINED.md (understand Kiota)
    ↓
-4. TESTING.md (testar)
+4. TESTING.md (test)
 ```
 
-### Para Desenvolvedores
+### For Developers
 
 ```
-1. README.md (visão geral)
+1. README.md (overview)
    ↓
-2. INTEGRATION-GUIDE.md (entender integração)
+2. INTEGRATION-GUIDE.md (understand integration)
    ↓
-3. OPENAPI-WORKFLOW.md (workflow de desenvolvimento)
+3. OPENAPI-WORKFLOW.md (development workflow)
    ↓
 4. AUTOMATIC-DISCOVERY.md (service discovery)
    ↓
-5. ARCHITECTURE.md (decisões técnicas)
+5. ARCHITECTURE.md (technical decisions)
 ```
 
-### Para DevOps
+### For DevOps
 
 ```
-1. README.md (visão geral)
+1. README.md (overview)
    ↓
 2. k8s/README.md (deploy)
    ↓
-3. k8s/SERVICE-DISCOVERY.md (descoberta no K8s)
+3. k8s/SERVICE-DISCOVERY.md (discovery on K8s)
    ↓
-4. OPENAPI-WORKFLOW.md (pipeline CI/CD)
+4. OPENAPI-WORKFLOW.md (CI/CD pipeline)
    ↓
-5. TESTING.md (validação)
+5. TESTING.md (validation)
 ```
 
 ---
 
-## 📖 Resumo de Cada Documento
+## 📖 Summary of Each Document
 
 ### README.md
-**Público:** Todos  
-**Tamanho:** ~1500 linhas  
-**Conteúdo:**
-- Visão geral da POC
-- Tecnologias utilizadas
-- Arquitetura dos serviços
-- Como executar (Aspire + Kubernetes)
-- Endpoints disponíveis
-- Service Discovery cross-namespace
-- Prevenção de quebra de contratos
+**Audience:** Everyone
+**Size:** ~1500 lines
+**Contents:**
+- POC overview
+- Technologies used
+- Service architecture
+- How to run (Aspire + Kubernetes)
+- Available endpoints
+- Cross-namespace Service Discovery
+- Contract break prevention
 
 ### QUICK-START.md
-**Público:** Iniciantes  
-**Tamanho:** Criado agora  
-**Conteúdo:**
-- Pré-requisitos mínimos
-- 3 comandos para rodar
-- Teste rápido
-- Próximos passos
+**Audience:** Beginners
+**Size:** Created recently
+**Contents:**
+- Minimum prerequisites
+- 3 commands to run
+- Quick test
+- Next steps
 
 ### KIOTA-EXPLAINED.md
-**Público:** Todos (especialmente quem não conhece Kiota)  
-**Tamanho:** ~600 linhas  
-**Conteúdo:**
-- O que é Kiota (analogias simples)
-- Como funciona (OpenAPI → código gerado)
-- Arquivos gerados
-- Comparação antes/depois
-- Prevenção de bugs em compile-time
-- Exemplos práticos completos
+**Audience:** Everyone (especially those unfamiliar with Kiota)
+**Size:** ~600 lines
+**Contents:**
+- What is Kiota (simple analogies)
+- How it works (OpenAPI → generated code)
+- Generated files
+- Before/after comparison
+- Compile-time bug prevention
+- Complete practical examples
 
 ### AUTOMATIC-DISCOVERY.md
-**Público:** Desenvolvedores/Arquitetos  
-**Tamanho:** ~400 linhas  
-**Conteúdo:**
-- Problema de URLs hardcoded
-- Solução com Labels + KubernetesClient
-- Fluxo completo da descoberta
-- Vantagens vs URLs fixas
-- Implementação passo a passo
+**Audience:** Developers/Architects
+**Size:** ~400 lines
+**Contents:**
+- Hardcoded URLs problem
+- Solution with Labels + KubernetesClient
+- Full discovery flow
+- Advantages vs fixed URLs
+- Step-by-step implementation
 
 ### INTEGRATION-GUIDE.md
-**Público:** Desenvolvedores  
-**Tamanho:** ~800 linhas  
-**Conteúdo:**
-- Arquitetura da integração completa
-- Projeto Shared (código reutilizável)
-- Factories que combinam descoberta + Kiota
-- Fluxo: Descoberta → Kiota → Type-safe
-- Como adicionar novos serviços (10 linhas!)
-- Comparação antes/depois
+**Audience:** Developers
+**Size:** ~800 lines
+**Contents:**
+- Full integration architecture
+- Shared project (reusable code)
+- Factories combining discovery + Kiota
+- Flow: Discovery → Kiota → Type-safe
+- How to add new services (10 lines!)
+- Before/after comparison
 
 ### OPENAPI-WORKFLOW.md
-**Público:** Desenvolvedores/DevOps  
-**Tamanho:** ~700 linhas  
-**Conteúdo:**
-- Geração automática de OpenAPI
-- OpenAPI como artefato em CI/CD
-- Scripts locais (bash/PowerShell)
-- GitHub Actions workflow completo
-- Validação de breaking changes
-- Fluxo dev → prod
+**Audience:** Developers/DevOps
+**Size:** ~700 lines
+**Contents:**
+- Automatic OpenAPI generation
+- OpenAPI as a CI/CD artifact
+- Local scripts (bash/PowerShell)
+- Complete GitHub Actions workflow
+- Breaking change validation
+- Dev → prod flow
 
 ### TESTING.md
-**Público:** QA/Desenvolvedores  
-**Tamanho:** ~500 linhas  
-**Conteúdo:**
-- POC deployada no k3d
-- Como testar descoberta automática
-- Endpoints de teste
-- Logs de descoberta
-- Comandos kubectl úteis
+**Audience:** QA/Developers
+**Size:** ~500 lines
+**Contents:**
+- POC deployed on k3d
+- How to test automatic discovery
+- Test endpoints
+- Discovery logs
+- Useful kubectl commands
 - Troubleshooting
 
 ### k8s/README.md
-**Público:** DevOps/SRE  
-**Tamanho:** ~400 linhas  
-**Conteúdo:**
-- Manifests Kubernetes
-- Deploy passo a passo
-- Service Discovery cross-namespace
+**Audience:** DevOps/SRE
+**Size:** ~400 lines
+**Contents:**
+- Kubernetes manifests
+- Step-by-step deploy
+- Cross-namespace Service Discovery
 - Network policies
 - Troubleshooting
 
 ### k8s/SERVICE-DISCOVERY.md
-**Público:** DevOps/Arquitetos  
-**Tamanho:** ~600 linhas  
-**Conteúdo:**
-- Descoberta automática detalhada
+**Audience:** DevOps/Architects
+**Size:** ~600 lines
+**Contents:**
+- Detailed automatic discovery
 - RBAC permissions
-- Labels e annotations
-- Troubleshooting completo
-- Endpoints de catálogo
+- Labels and annotations
+- Complete troubleshooting
+- Catalog endpoints
 
 ### ARCHITECTURE.md
-**Público:** Arquitetos/Tech Leads  
-**Tamanho:** Criado agora  
-**Conteúdo:**
-- Decisões arquiteturais
+**Audience:** Architects/Tech Leads
+**Size:** Created recently
+**Contents:**
+- Architectural decisions
 - Trade-offs
-- Alternativas consideradas
-- Escalabilidade
-- Segurança
+- Considered alternatives
+- Scalability
+- Security
 
 ---
 
-## 🎓 Perguntas Frequentes → Documento
+## 🎓 Frequently Asked Questions → Document
 
-| Pergunta | Documento |
-|----------|-----------|
-| Como Kiota funciona? | [KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md) |
-| Como descobrir serviços automaticamente? | [AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md) |
-| Como gerar OpenAPI do código? | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
-| Como deployar no Kubernetes? | [k8s/README.md](k8s/README.md) |
-| Como testar a POC? | [TESTING.md](TESTING.md) |
-| Como adicionar novo serviço? | [INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md) |
-| Quais são os benefícios? | [README.md](README.md) + [ARCHITECTURE.md](ARCHITECTURE.md) |
-
----
-
-## 🔧 Scripts e Ferramentas
-
-| Script | Descrição | Documento |
-|--------|-----------|-----------|
-| `generate-openapi.sh` | Gera OpenAPI localmente (Linux/Mac) | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
-| `generate-openapi.ps1` | Gera OpenAPI localmente (Windows) | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
-| `.github/workflows/openapi-sync.yml` | Pipeline CI/CD automático | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
+| Question | Document |
+|----------|----------|
+| How does Kiota work? | [KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md) |
+| How to discover services automatically? | [AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md) |
+| How to generate OpenAPI from code? | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
+| How to deploy on Kubernetes? | [k8s/README.md](k8s/README.md) |
+| How to test the POC? | [TESTING.md](TESTING.md) |
+| How to add a new service? | [INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md) |
+| What are the benefits? | [README.md](README.md) + [ARCHITECTURE.md](ARCHITECTURE.md) |
 
 ---
 
-## 📊 Estatísticas da Documentação
+## 🔧 Scripts and Tools
 
-| Métrica | Valor |
-|---------|-------|
-| **Total de documentos** | 10 |
-| **Linhas totais** | ~6000 |
-| **Exemplos de código** | 50+ |
-| **Diagramas** | 15+ |
+| Script | Description | Document |
+|--------|-------------|----------|
+| `generate-openapi.sh` | Generates OpenAPI locally (Linux/Mac) | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
+| `generate-openapi.ps1` | Generates OpenAPI locally (Windows) | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
+| `.github/workflows/openapi-sync.yml` | Automatic CI/CD pipeline | [OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md) |
+
+---
+
+## 📊 Documentation Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total documents** | 10 |
+| **Total lines** | ~6000 |
+| **Code examples** | 50+ |
+| **Diagrams** | 15+ |
 | **Scripts** | 3 |
 
 ---
 
-## 🎯 Objetivos da Documentação
+## 🎯 Documentation Goals
 
-✅ **Didática** - Explicações simples com analogias  
-✅ **Completa** - Cobre todos os aspectos da POC  
-✅ **Prática** - Exemplos reais e executáveis  
-✅ **Estruturada** - Navegação clara entre documentos  
-✅ **Progressiva** - Do básico ao avançado  
-
----
-
-## 🚀 Próximos Passos
-
-Depois de ler a documentação:
-
-1. ⭐ **Star o repositório** se foi útil
-2. 🐛 **Reportar issues** se encontrar problemas
-3. 🤝 **Contribuir** com melhorias
-4. 📢 **Compartilhar** com a comunidade
+✅ **Educational** - Simple explanations with analogies
+✅ **Complete** - Covers all aspects of the POC
+✅ **Practical** - Real, runnable examples
+✅ **Structured** - Clear navigation between documents
+✅ **Progressive** - From basics to advanced
 
 ---
 
-## 📝 Contribuindo com a Documentação
+## 🚀 Next Steps
 
-Encontrou algo confuso? Quer adicionar mais exemplos?
+After reading the documentation:
 
-1. Fork o repositório
-2. Edite o documento relevante
-3. Abra um Pull Request
-4. Descreva o que melhorou
+1. ⭐ **Star the repository** if it was helpful
+2. 🐛 **Report issues** if you find problems
+3. 🤝 **Contribute** with improvements
+4. 📢 **Share** with the community
 
-**Todas as contribuições são bem-vindas!** 🎉
+---
+
+## 📝 Contributing to Documentation
+
+Found something confusing? Want to add more examples?
+
+1. Fork the repository
+2. Edit the relevant document
+3. Open a Pull Request
+4. Describe what you improved
+
+**All contributions are welcome!** 🎉

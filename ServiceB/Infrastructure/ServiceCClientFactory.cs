@@ -5,7 +5,7 @@ using Shared.Infrastructure;
 namespace ServiceB.Infrastructure;
 
 /// <summary>
-/// Factory para criar cliente Kiota do ServiceC com descoberta automática
+/// Factory for creating a Kiota client for ServiceC with automatic discovery
 /// </summary>
 public class ServiceCClientFactory : KiotaClientFactoryBase<ApiClient>
 {

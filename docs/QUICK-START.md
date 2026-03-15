@@ -1,55 +1,55 @@
-# ⚡ Quick Start - 5 Minutos
+# ⚡ Quick Start - 5 Minutes
 
-Rode a POC completa em menos de 5 minutos!
+Run the full POC in less than 5 minutes!
 
 ---
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
 ```bash
-# Verificar versões
+# Check versions
 dotnet --version  # >= 10.0
 kubectl version   # Kubernetes CLI
-k3d version       # k3d para cluster local
+k3d version       # k3d for local cluster
 ```
 
-**Não tem instalado?**
+**Not installed?**
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [k3d](https://k3d.io/)
 
 ---
 
-## 🚀 Opção 1: Desenvolvimento Local (Aspire)
+## 🚀 Option 1: Local Development (Aspire)
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/MatheusReichert/dotnet-service-discovery-kiota-poc.git
 cd dotnet-service-discovery-kiota-poc
 ```
 
-### 2. Rode o Aspire AppHost
+### 2. Run the Aspire AppHost
 
 ```bash
 dotnet run apphost.cs
 ```
 
-### 3. Acesse o Dashboard
+### 3. Access the Dashboard
 
-Abra no navegador: `https://localhost:17247/login?t=<token>`
+Open in your browser: `https://localhost:17247/login?t=<token>`
 
-O token aparece no console.
+The token appears in the console.
 
-### 4. Teste a descoberta automática
+### 4. Test automatic discovery
 
-No dashboard, clique em **ServiceA** → Abra o endpoint:
+In the dashboard, click **ServiceA** → Open the endpoint:
 
 ```
 GET /api/users/with-products-typed/1
 ```
 
-**Resposta esperada:**
+**Expected response:**
 ```json
 {
   "message": "ServiceA → ServiceB usando Kiota + Descoberta Automática",
@@ -58,20 +58,20 @@ GET /api/users/with-products-typed/1
 }
 ```
 
-✅ **Pronto!** Descoberta automática + Kiota funcionando!
+✅ **Done!** Automatic discovery + Kiota working!
 
 ---
 
-## ☸️ Opção 2: Kubernetes (k3d)
+## ☸️ Option 2: Kubernetes (k3d)
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/MatheusReichert/dotnet-service-discovery-kiota-poc.git
 cd dotnet-service-discovery-kiota-poc
 ```
 
-### 2. Build das imagens
+### 2. Build images
 
 ```bash
 # ServiceA
@@ -88,13 +88,13 @@ dotnet publish -t:PublishContainer -p ContainerRepository=localhost:5555/service
 cd ..
 ```
 
-### 3. Criar cluster k3d e importar imagens
+### 3. Create k3d cluster and import images
 
 ```bash
-# Criar cluster
+# Create cluster
 k3d cluster create aspire-poc
 
-# Importar imagens
+# Import images
 podman save localhost:5555/servicea:latest -o /tmp/servicea.tar
 k3d image import /tmp/servicea.tar -c aspire-poc
 
@@ -105,7 +105,7 @@ podman save localhost:5555/servicec:latest -o /tmp/servicec.tar
 k3d image import /tmp/servicec.tar -c aspire-poc
 ```
 
-### 4. Deploy no Kubernetes
+### 4. Deploy to Kubernetes
 
 ```bash
 kubectl apply -f k8s/00-namespaces.yaml
@@ -115,22 +115,22 @@ kubectl apply -f k8s/02-serviceb-deployment.yaml
 kubectl apply -f k8s/03-servicec-deployment.yaml
 ```
 
-### 5. Verificar pods
+### 5. Verify pods
 
 ```bash
 kubectl get pods -A | grep service
 ```
 
-Aguarde todos os pods ficarem `Running (1/1)`.
+Wait for all pods to be `Running (1/1)`.
 
-### 6. Testar descoberta automática
+### 6. Test automatic discovery
 
 ```bash
 kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
   curl -s http://servicea.users-ns/api/users/with-products-typed/1
 ```
 
-**Resposta esperada:**
+**Expected response:**
 ```json
 {
   "message": "ServiceA → ServiceB usando Kiota + Descoberta Automática",
@@ -138,80 +138,80 @@ kubectl run curl-test --image=curlimages/curl --rm -i --restart=Never -- \
 }
 ```
 
-✅ **Pronto!** POC rodando no Kubernetes com descoberta automática!
+✅ **Done!** POC running on Kubernetes with automatic discovery!
 
 ---
 
-## 📊 O que você acabou de ver?
+## 📊 What did you just see?
 
-### Descoberta Automática
-- ServiceA descobriu ServiceB via label `api-type=products-api`
-- URL construída automaticamente: `http://serviceb.products-ns.svc.cluster.local`
-- **Zero URLs hardcoded!**
+### Automatic Discovery
+- ServiceA discovered ServiceB via label `api-type=products-api`
+- URL built automatically: `http://serviceb.products-ns.svc.cluster.local`
+- **Zero hardcoded URLs!**
 
 ### Kiota Type-Safe
-- Cliente gerado automaticamente do OpenAPI
-- IntelliSense completo
-- Erros detectados em compile-time
+- Client generated automatically from OpenAPI
+- Full IntelliSense
+- Errors detected at compile-time
 
 ### Cross-Namespace
 - ServiceA (users-ns) → ServiceB (products-ns) → ServiceC (orders-ns)
-- Comunicação transparente entre namespaces
+- Transparent communication between namespaces
 
 ---
 
-## 🎯 Próximos Passos
+## 🎯 Next Steps
 
-Agora que você rodou a POC, explore:
+Now that you've run the POC, explore:
 
-1. **[KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md)** - Entender como Kiota funciona
-2. **[AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md)** - Como funciona a descoberta
-3. **[INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md)** - Como tudo se integra
-4. **[OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md)** - Pipeline CI/CD
+1. **[KIOTA-EXPLAINED.md](KIOTA-EXPLAINED.md)** - Understand how Kiota works
+2. **[AUTOMATIC-DISCOVERY.md](AUTOMATIC-DISCOVERY.md)** - How discovery works
+3. **[INTEGRATION-GUIDE.md](INTEGRATION-GUIDE.md)** - How everything integrates
+4. **[OPENAPI-WORKFLOW.md](OPENAPI-WORKFLOW.md)** - CI/CD Pipeline
 
 ---
 
-## 🐛 Problemas?
+## 🐛 Problems?
 
-### Aspire não inicia
+### Aspire won't start
 ```bash
-# Verificar .NET SDK
+# Check .NET SDK
 dotnet --version
 
-# Limpar e recompilar
+# Clean and rebuild
 dotnet clean
 dotnet build
 ```
 
-### Pods não sobem no Kubernetes
+### Pods won't come up in Kubernetes
 ```bash
-# Ver logs
+# View logs
 kubectl logs -n users-ns -l app=servicea
 
-# Descrever pod
+# Describe pod
 kubectl describe pod -n users-ns <pod-name>
 ```
 
-### Descoberta não funciona
+### Discovery not working
 ```bash
-# Verificar RBAC
+# Check RBAC
 kubectl get clusterrole service-discovery-reader
 kubectl get clusterrolebinding | grep discovery
 
-# Verificar labels
+# Check labels
 kubectl get svc -A --show-labels | grep api-type
 ```
 
 ---
 
-## 📚 Documentação Completa
+## 📚 Full Documentation
 
-Ver: **[DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)**
+See: **[DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)**
 
 ---
 
-**Tempo total:** ~5 minutos ⚡
+**Total time:** ~5 minutes ⚡
 
-**Dificuldade:** Fácil 🟢
+**Difficulty:** Easy 🟢
 
-**Resultado:** POC completa funcionando! 🎉
+**Result:** Full POC working! 🎉
