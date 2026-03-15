@@ -41,21 +41,18 @@ app.MapGet("/api/orders", () =>
         new { Id = 2, CustomerId = 2, Total = 59.98 }
     });
 })
-.WithName("GetOrders")
-.WithOpenApi();
+.WithName("GetOrders");
 
 app.MapGet("/api/orders/{id}", (int id) =>
 {
     return Results.Ok(new { Id = id, CustomerId = 1, Total = 199.99 });
 })
-.WithName("GetOrderById")
-.WithOpenApi();
+.WithName("GetOrderById");
 
 app.MapDelete("/api/orders/{id}", (int id) =>
 {
     return Results.NoContent();
 })
-.WithName("DeleteOrder")
-.WithOpenApi();
+.WithName("DeleteOrder");
 
 app.Run();
