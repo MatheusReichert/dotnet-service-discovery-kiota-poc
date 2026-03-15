@@ -34,7 +34,11 @@ jobs:
         run: |
           dotnet run --project ServiceB --no-build --urls "http://localhost:5002" &
           echo $! > serviceb.pid
-          sleep 10
+          for i in $(seq 1 30); do
+            curl -s http://localhost:5002/openapi/v1.json > /dev/null 2>&1 && echo "ServiceB ready" && break
+            echo "Waiting for ServiceB... ($i/30)"
+            sleep 2
+          done
 
       - name: Extract OpenAPI from ServiceB
         run: |
@@ -52,7 +56,11 @@ jobs:
         run: |
           dotnet run --project ServiceC --no-build --urls "http://localhost:5003" &
           echo $! > servicec.pid
-          sleep 10
+          for i in $(seq 1 30); do
+            curl -s http://localhost:5003/openapi/v1.json > /dev/null 2>&1 && echo "ServiceC ready" && break
+            echo "Waiting for ServiceC... ($i/30)"
+            sleep 2
+          done
 
       - name: Extract OpenAPI from ServiceC
         run: |
